@@ -37,7 +37,6 @@ class Login {
 				<div class="login_left">
 					<div class="login_image_container">
 						<img src="/src/assets/event_photography_login.png" alt="Event Photography" />
-						<div class="login_left_overlay"></div>
 					</div>
 					<div class="login_branding">
 						<div class="login_logo">
@@ -62,7 +61,7 @@ class Login {
 									id="${LoginFormFieldIds.EMAIL}"
 									name="${LoginFormFieldIds.EMAIL}"
 									class="login_input"
-									placeholder="Email layout"
+									placeholder="Email"
 									autocomplete="username"
 									required
 								/>
@@ -85,24 +84,19 @@ class Login {
 										id="passwordToggle"
 										aria-label="Toggle password visibility"
 									>
-										<svg class="login_eye_icon login_eye_open" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-											<path d="M10 3C5.5 3 1.73 6.11 0 10.5C1.73 14.89 5.5 18 10 18C14.5 18 18.27 14.89 20 10.5C18.27 6.11 14.5 3 10 3ZM10 15.5C7.52 15.5 5.5 13.48 5.5 11C5.5 8.52 7.52 6.5 10 6.5C12.48 6.5 14.5 8.52 14.5 11C14.5 13.48 12.48 15.5 10 15.5ZM10 8C8.62 8 7.5 9.12 7.5 10.5C7.5 11.88 8.62 13 10 13C11.38 13 12.5 11.88 12.5 10.5C12.5 9.12 11.38 8 10 8Z" fill="currentColor"/>
+										<svg class="login_eye_icon login_eye_open" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+											<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+											<circle cx="12" cy="12" r="3"></circle>
 										</svg>
-										<svg class="login_eye_icon login_eye_closed" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-											<path d="M2.5 2.5L17.5 17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-											<path d="M8.25 8.25C7.84 8.66 7.5 9.18 7.5 9.75C7.5 11.13 8.62 12.25 10 12.25C10.57 12.25 11.09 11.91 11.5 11.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-											<path d="M3.5 6.5C1.73 8.11 0 10.5 0 10.5C1.73 14.89 5.5 18 10 18C11.5 18 12.9 17.6 14.1 16.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-											<path d="M16.5 13.5C18.27 11.89 20 9.5 20 9.5C18.27 5.11 14.5 2 10 2C8.5 2 7.1 2.4 5.9 3.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+										<svg class="login_eye_icon login_eye_closed" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+											<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+											<line x1="1" y1="1" x2="23" y2="23"></line>
 										</svg>
 									</button>
 								</div>
 								<span class="login_error" id="passwordError" role="alert"></span>
 							</div>
 							<div class="login_options">
-								<label class="login_checkbox_label">
-									<input type="checkbox" class="login_checkbox" id="rememberMe" />
-									<span class="login_checkbox_text">Remember Me</span>
-								</label>
 								<a href="/forgot-password" class="login_link" id="forgotPasswordLink">Forgot Password?</a>
 							</div>
 							<button type="submit" class="login_button" id="loginButton">

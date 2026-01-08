@@ -1,31 +1,50 @@
 .login_container {
 	display: flex;
-	height: 100%;
-	width: 100%;
+	height: 100vh;
+	width: 100vw;
 	overflow: hidden;
+	background-color: #f0f4f8;
+	font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .login_left {
-	flex: 0 0 40%;
+	flex: 0 0 50%;
 	position: relative;
-	background: linear-gradient(135deg, #EE4D68 0%, #F79B9C 50%, #FFA07A 100%);
+	background: #003366;
 	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
-	padding: 40px;
+	align-items: center;
+	justify-content: center;
 	overflow: hidden;
 }
 
-.login_left::after {
-	content: "";
+.login_image_container {
+	width: 100%;
+	height: 100%;
+	position: relative;
+}
+
+.login_image_container img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	opacity: 0.8;
+}
+
+.login_left_overlay {
 	position: absolute;
-	right: 0;
 	top: 0;
-	bottom: 0;
-	width: 100px;
-	background: linear-gradient(135deg, #EE4D68 0%, #F79B9C 50%, #FFA07A 100%);
-	clip-path: ellipse(100% 100% at 100% 50%);
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(135deg, rgba(0, 51, 102, 0.4) 0%, rgba(0, 51, 102, 0.1) 100%);
 	z-index: 1;
+}
+
+.login_branding {
+	position: absolute;
+	top: 40px;
+	left: 40px;
+	z-index: 2;
 }
 
 .login_branding {
@@ -51,16 +70,18 @@
 
 .login_logo_title {
 	font-size: 32px;
-	font-family: "bold";
-	color: var(--textWhite);
+	font-weight: 700;
+	color: #ffffff;
 	margin-bottom: 4px;
 	letter-spacing: -0.5px;
+	text-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .login_logo_subtitle {
 	font-size: 14px;
-	color: var(--textWhite);
+	color: #ffffff;
 	opacity: 0.9;
+	text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 .login_illustration {
@@ -96,8 +117,8 @@
 
 .login_title {
 	font-size: 36px;
-	font-family: "bold";
-	color: var(--textPrimary);
+	font-weight: 700;
+	color: #1a365d;
 	margin-bottom: 12px;
 	letter-spacing: -0.5px;
 }
@@ -148,8 +169,8 @@
 
 .login_input:focus {
 	outline: none;
-	border-color: var(--inputFocusBorder);
-	box-shadow: 0 0 0 3px rgba(238, 77, 104, 0.1);
+	border-color: #3182ce;
+	box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
 }
 
 .login_input:invalid:not(:placeholder-shown) {
@@ -237,7 +258,7 @@
 	height: 18px;
 	margin-right: 8px;
 	cursor: pointer;
-	accent-color: var(--brandPink);
+	accent-color: #3182ce;
 }
 
 .login_checkbox_text {
@@ -260,27 +281,27 @@
 	width: 100%;
 	padding: 14px 24px;
 	font-size: 16px;
-	font-family: "medium";
-	color: var(--buttonPrimaryText);
-	background: var(--buttonPrimaryBg);
+	font-weight: 600;
+	color: #ffffff;
+	background: #3182ce;
 	border: none;
 	border-radius: 8px;
 	cursor: pointer;
 	transition: all 0.2s ease;
 	margin-bottom: 24px;
-	box-shadow: var(--shadowPink);
+	box-shadow: 0 4px 6px rgba(49, 130, 206, 0.2);
 	letter-spacing: 0.3px;
 }
 
 .login_button:hover {
-	background: var(--buttonPrimaryHover);
-	box-shadow: 0 6px 16px rgba(238, 77, 104, 0.4);
+	background: #2b6cb0;
+	box-shadow: 0 6px 16px rgba(49, 130, 206, 0.3);
 	transform: translateY(-1px);
 }
 
 .login_button:active {
 	transform: translateY(0);
-	box-shadow: var(--shadowPink);
+	box-shadow: 0 4px 6px rgba(49, 130, 206, 0.2);
 }
 
 .login_button:disabled {
@@ -363,74 +384,34 @@
 @media (max-width: 968px) {
 	.login_container {
 		flex-direction: column;
+		height: auto;
+		min-height: 100vh;
 	}
 	.login_left {
-		flex: 0 0 auto;
-		min-height: 300px;
-		padding: 30px 24px;
+		flex: 0 0 300px;
+		width: 100%;
 	}
-	.login_left::after {
-		display: none;
-	}
-	.login_illustration {
-		margin-top: 20px;
-	}
-	.login_illustration_svg {
-		max-width: 300px;
+	.login_branding {
+		top: 20px;
+		left: 20px;
 	}
 	.login_right {
-		flex: 1 1 0;
+		flex: 1;
 		padding: 32px 24px;
 	}
 	.login_form_container {
 		max-width: 100%;
 	}
-	.login_title {
-		font-size: 32px;
-	}
 }
 
 @media (max-width: 640px) {
 	.login_left {
-		min-height: 250px;
-		padding: 24px 20px;
+		flex: 0 0 200px;
 	}
 	.login_logo_title {
-		font-size: 28px;
-	}
-	.login_logo_subtitle {
-		font-size: 12px;
-	}
-	.login_illustration_svg {
-		max-width: 250px;
-	}
-	.login_right {
-		padding: 24px 20px;
+		font-size: 24px;
 	}
 	.login_title {
 		font-size: 28px;
-	}
-	.login_subtitle {
-		font-size: 14px;
-		margin-bottom: 24px;
-	}
-	.login_form_group {
-		margin-bottom: 20px;
-	}
-	.login_input {
-		padding: 12px 16px;
-		font-size: 16px;
-	}
-	.login_options {
-		margin-bottom: 24px;
-		flex-direction: column;
-		align-items: flex-start;
-	}
-	.login_link {
-		margin-top: 12px;
-	}
-	.login_button {
-		padding: 12px 24px;
-		margin-bottom: 20px;
 	}
 }

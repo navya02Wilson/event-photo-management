@@ -35,45 +35,25 @@ class Login {
 		this.container.innerHTML = `
 			<div class="login_container">
 				<div class="login_left">
+					<div class="login_image_container">
+						<img src="/src/assets/event_photography_login.png" alt="Event Photography" />
+						<div class="login_left_overlay"></div>
+					</div>
 					<div class="login_branding">
 						<div class="login_logo">
-							<span class="login_logo_icon">✨</span>
+							<span class="login_logo_icon">📸</span>
 							<div class="login_logo_text">
-								<h1 class="login_logo_title">Eva</h1>
-								<p class="login_logo_subtitle">Event Management Company</p>
+								<h1 class="login_logo_title">EventSnap</h1>
+								<p class="login_logo_subtitle">Manage your event memories effortlessly</p>
 							</div>
 						</div>
-					</div>
-					<div class="login_illustration">
-						<svg class="login_illustration_svg" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
-							<circle cx="80" cy="220" r="25" fill="#EE4D68"/>
-							<rect x="60" y="180" width="40" height="50" rx="5" fill="#EE4D68"/>
-							<rect x="65" y="175" width="30" height="20" rx="3" fill="#F79B9C"/>
-							<path d="M70 175 L75 165 L80 175 L85 165 L90 175" stroke="#EE4D68" stroke-width="2" fill="none"/>
-							<circle cx="150" cy="200" r="20" fill="#EE4D68"/>
-							<rect x="135" y="160" width="30" height="50" rx="5" fill="#F79B9C"/>
-							<path d="M140 160 L145 150 L150 160 L155 150 L160 160" stroke="#EE4D68" stroke-width="2" fill="none"/>
-							<ellipse cx="200" cy="180" rx="40" ry="30" fill="#F79B9C"/>
-							<rect x="180" y="150" width="40" height="60" rx="5" fill="#EE4D68"/>
-							<circle cx="200" cy="140" r="8" fill="#FFD700"/>
-							<circle cx="190" cy="135" r="5" fill="#EE4D68"/>
-							<circle cx="210" cy="135" r="5" fill="#EE4D68"/>
-							<circle cx="320" cy="210" r="18" fill="#F79B9C"/>
-							<rect x="305" y="170" width="30" height="50" rx="5" fill="#EE4D68"/>
-							<circle cx="310" cy="160" r="12" fill="#666666"/>
-							<circle cx="330" cy="160" r="12" fill="#CCCCCC"/>
-							<circle cx="350" cy="160" r="12" fill="#FFFFFF"/>
-							<circle cx="100" cy="100" r="3" fill="#EE4D68"/>
-							<circle cx="250" cy="80" r="3" fill="#F79B9C"/>
-							<circle cx="300" cy="120" r="3" fill="#EE4D68"/>
-						</svg>
 					</div>
 				</div>
 				<div class="login_right">
 					<div class="login_form_container">
-						<h1 class="login_title">Login</h1>
+						<h1 class="login_title">Welcome Back</h1>
 						<p class="login_subtitle">
-							Don't have an account? <a href="/register" class="login_link" id="registerLink">Create your account</a>
+							Sign in to your account. Don't have one? <a href="/register" class="login_link" id="registerLink">Register here</a>
 						</p>
 						<form class="login_form" id="loginForm">
 							<div class="login_form_group">
@@ -82,7 +62,7 @@ class Login {
 									id="${LoginFormFieldIds.EMAIL}"
 									name="${LoginFormFieldIds.EMAIL}"
 									class="login_input"
-									placeholder="Username"
+									placeholder="Email layout"
 									autocomplete="username"
 									required
 								/>
@@ -126,23 +106,8 @@ class Login {
 								<a href="/forgot-password" class="login_link" id="forgotPasswordLink">Forgot Password?</a>
 							</div>
 							<button type="submit" class="login_button" id="loginButton">
-								Login
+								<span class="login_button_text">Sign In</span>
 							</button>
-							<div class="login_social_divider">
-								<span class="login_social_divider_text">Or Login with</span>
-							</div>
-							<div class="login_social_buttons">
-								<button type="button" class="login_social_button login_social_facebook" id="facebookLogin">
-									<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-										<path d="M10 0C4.48 0 0 4.48 0 10C0 14.84 3.44 18.87 8 19.8V13H6V10H8V7.5C8 5.57 9.57 4 11.5 4H13V7H11C10.45 7 10 7.45 10 8V10H13V13H10V19.8C14.56 18.87 18 14.84 18 10C18 4.48 13.52 0 10 0Z" fill="currentColor"/>
-									</svg>
-								</button>
-								<button type="button" class="login_social_button login_social_twitter" id="twitterLogin">
-									<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-										<path d="M18.244 4.751C17.54 5.044 16.79 5.25 16.005 5.36C16.81 4.85 17.445 4.08 17.77 3.18C17.015 3.65 16.17 3.99 15.275 4.18C14.56 3.45 13.54 2.95 12.4 2.95C10.36 2.95 8.71 4.6 8.71 6.64C8.71 6.92 8.74 7.19 8.8 7.45C6.015 7.3 3.56 5.9 1.77 3.83C1.47 4.35 1.3 4.95 1.3 5.6C1.3 6.82 1.94 7.9 2.88 8.5C2.24 8.5 1.65 8.33 1.14 8.06V8.1C1.14 9.9 2.36 11.42 4.04 11.78C3.75 11.85 3.44 11.89 3.12 11.89C2.89 11.89 2.67 11.87 2.45 11.83C2.9 13.33 4.27 14.45 5.9 14.47C4.62 15.48 3.02 16.1 1.28 16.1C1 16.1 0.72 16.08 0.44 16.05C2.07 17.15 4.01 17.8 6.09 17.8C12.4 17.8 15.95 11.95 15.95 7.05C15.95 6.88 15.95 6.71 15.94 6.54C16.7 6.01 17.37 5.35 18.244 4.751Z" fill="currentColor"/>
-									</svg>
-								</button>
-							</div>
 						</form>
 					</div>
 				</div>

@@ -37,19 +37,20 @@ class Login {
 				<div class="login_left">
 					<div class="login_image_container">
 						<img src="/src/assets/event_photography_login.png" alt="Event Photography" />
-					</div>
-					<div class="login_branding">
-						<div class="login_logo">
-							<span class="login_logo_icon">📸</span>
-							<div class="login_logo_text">
-								<h1 class="login_logo_title">EventSnap</h1>
-								<p class="login_logo_subtitle">Manage your event memories effortlessly</p>
-							</div>
-						</div>
+						<div class="login_left_overlay"></div>
 					</div>
 				</div>
 				<div class="login_right">
 					<div class="login_form_container">
+						<div class="login_card_branding">
+							<div class="login_logo">
+								<span class="login_logo_icon">📸</span>
+								<div class="login_logo_text">
+									<h1 class="login_logo_title">EventSnap</h1>
+									<p class="login_logo_subtitle">Manage your event memories effortlessly</p>
+								</div>
+							</div>
+						</div>
 						<h1 class="login_title">Welcome Back</h1>
 						<p class="login_subtitle">
 							Sign in to your account. Don't have one? <a href="/register" class="login_link" id="registerLink">Register here</a>

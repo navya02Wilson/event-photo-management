@@ -5,6 +5,11 @@
 const express = require("express");
 const router = express.Router();
 
+// Import route modules
+const authRoutes = require("./auth.routes");
+const driveRoutes = require("./drive.routes");
+const eventRoutes = require("./event.routes");
+
 /**
  * Health check endpoint
  */
@@ -26,6 +31,11 @@ router.get("/", (req, res) => {
 		version: "1.0.0",
 	});
 });
+
+// Mount route modules
+router.use("/auth", authRoutes);
+router.use("/drive", driveRoutes);
+router.use("/events", eventRoutes);
 
 module.exports = router;
 

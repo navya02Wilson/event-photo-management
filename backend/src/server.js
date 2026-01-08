@@ -7,6 +7,7 @@ const env = require("./config/env");
 const logger = require("./config/logger");
 const { testConnection } = require("./config/database");
 const { runMigrations } = require("./db/migrate");
+const { runSeeds } = require("./db/seed");
 
 /**
  * Start the server
@@ -25,6 +26,10 @@ const startServer = async () => {
 			logger.info("Database connected, running migrations...");
 			try {
 				await runMigrations();
+				
+				// Run seeds after migrations
+				logger.info("Running database seeds...");
+				await runSeeds();
 			} catch (error) {
 				logger.error("Migration failed:", error);
 				// In production, exit on migration failure

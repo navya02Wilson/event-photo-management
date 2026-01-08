@@ -1,0 +1,610 @@
+---
+alwaysApply: true
+---
+# Vanilla JavaScript Frontend Project Rules
+# Based on actual project structure and patterns
+
+## Project Structure & Organization
+
+### File Organization
+- **Components**: Place reusable UI components in `src/components/` with index.js files
+- **Pages**: Place page-level components in `src/pages/` with their own folders (e.g., `Login/login.js`, `Login/login.css`, `Login/login.html`)
+- **Services**: Place business logic and API calls in `src/services/` organized by feature
+- **API**: Place API client configurations and endpoints in `src/api/` organized by feature
+- **Store**: Place state management in `src/store/` with separate store files per feature
+- **Routes**: Place routing configuration in `src/routes/`
+- **Utils**: Place reusable utilities in `src/utils/` with descriptive names (e.g., `storage.util.js`, `validators.util.js`)
+- **Config**: Place configuration files in `src/config/` (e.g., `api.config.js`, `env.js`)
+- **Styles**: Place global styles in `src/styles/` (e.g., `main.css`, `variables.css`, `reset.css`)
+- **Tests**: Place tests in `src/tests/` organized by type (unit, e2e)
+
+### Naming Conventions
+- **Components**: Use PascalCase for component/class names (e.g., `Login`, `Navbar`, `Button`)
+- **Files**: Use kebab-case for file names (e.g., `login.js`, `auth.service.js`, `storage.util.js`)
+- **Folders**: Use kebab-case for folder names (e.g., `main-container`, `svg-components`)
+- **Constants**: Use UPPER_SNAKE_CASE for constant values (e.g., `API_STATUS.PENDING`, `USER_ROLES.ADMIN`)
+- **Enums/Constants Objects**: Use PascalCase for constant object names (e.g., `APIStatus`, `UserRoles`, `Locations`)
+- **Types/Interfaces**: Use PascalCase for type names (e.g., `UserData`, `AuthState`)
+- **Functions**: Use camelCase for function names (e.g., `handleSubmit`, `validateEmail`, `getUserData`)
+- **Variables**: Use camelCase for variable names (e.g., `userData`, `isLoading`, `errorMessage`)
+- **CSS Classes**: Use underscores between words (e.g., `login_container`, `custom_button_primary`)
+
+## Code Style & Formatting
+
+### Indentation & Spacing
+- Use tabs for indentation (not spaces)
+- Set printWidth to 120 characters
+- Use double quotes for strings
+- Always include semicolons
+- Use trailing commas in objects and arrays
+
+### Import Organization
+- Group imports in this order:
+  1. External library imports (axios, etc.)
+  2. Internal imports (relative paths)
+  3. Style imports (CSS files)
+- Use named imports when available
+- Use default imports for modules that export a single default
+
+### Module Structure
+- Use ES6 modules (import/export)
+- Place imports at the top
+- Define constants before functions
+- Place event handlers before render logic
+- Export functions/components as named exports when possible
+- Use default exports for main module exports
+
+## JavaScript Standards
+
+### Type Safety & Validation
+- Define explicit JSDoc types for all function parameters and return values
+- Use JSDoc comments for type documentation: `@param {Type} name - description`, `@returns {Type} description`
+- Use interfaces/type objects for data structures (documented with JSDoc)
+- Use enums/constant objects for fixed value sets
+- Avoid using `any` or `unknown` without proper type guards
+- **Null vs Undefined**: Always use `null` for optional/nullable values instead of `undefined` (e.g., `userData: UserData | null` not `userData: UserData | undefined`)
+
+### Enum/Constant Creation Guidelines
+- **Create Constants for Fixed Value Sets**: When you have a limited set of predefined values that won't change frequently
+- **Location Constants**: For geographical locations (e.g., `Location.CHENNAI`, `Location.TRIVANDRUM`)
+- **Status Constants**: For entity states (e.g., `Status.ACTIVE`, `Status.INACTIVE`)
+- **API Status Constants**: For request states (e.g., `APIStatus.PENDING`, `APIStatus.FULFILLED`, `APIStatus.REJECTED`)
+- **User Role Constants**: For user permission levels (e.g., `UserRoles.ADMIN`, `UserRoles.USER`)
+- **Form Field Constants**: For form field identifiers and types (e.g., `FormFieldIds.NAME`, `FormFieldTypes.INPUT`)
+- **Constant Naming**: Use PascalCase for constant object names, UPPER_SNAKE_CASE for constant values
+- **Constant Location**: Place all constants in `src/utils/constants.js` for centralized access
+- **Constant Usage**: Always use constant values instead of string literals in code
+- **Constant Import**: Import constants from utils: `import { APIStatus, UserRoles } from "../utils/constants"`
+
+### Data Structure Organization
+- **Component Data Types**: Document component-specific data structures with JSDoc in the component file
+- **Service Types**: Document service data structures with JSDoc in the service file
+- **Shared Types**: Place shared data structures in `src/utils/constants.js` or create a `src/utils/types.js` file
+- **Type Documentation**: Use JSDoc `@typedef` for complex types: `@typedef {Object} UserData`
+
+## State Management
+
+### Store Structure
+- Organize stores by feature in `src/store/` (e.g., `auth.store.js`, `user.store.js`)
+- Use a centralized store pattern with `src/store/store.js` as the main store
+- Use proper state initialization
+- Handle async actions with pending/fulfilled/rejected states
+- Clear state appropriately after operations
+- Use proper state getters and setters
+- Document state structure with JSDoc
+
+### Local State
+- Use module-level variables for component-local state
+- Use event listeners for side effects and user interactions
+- Handle loading states properly
+- Validate input before API calls
+- Use proper state update patterns
+
+## Component Patterns
+
+### Page Components
+- Each page should have its own folder (e.g., `Login/login.js`, `Login/login.css`, `Login/login.html`)
+- Use class-based or functional module patterns
+- Implement proper initialization methods
+- Handle DOM manipulation efficiently
+- Clean up event listeners on component destruction
+- Use proper error handling
+
+### Reusable Components
+- Place reusable components in `src/components/` with their own folders
+- Each component should have its own folder with `index.js`
+- Components should be self-contained and reusable
+- Use proper props/parameters for configuration
+- Implement proper initialization and cleanup
+
+### Form Components
+- Implement proper validation with error states
+- Use controlled inputs with state
+- Handle keyboard events (Enter key for forms)
+- Show validation errors below inputs
+- **Form Field Constants**: Always use constants for form field IDs and types instead of string literals
+- **Form Field Constant Pattern**: Create `FormFieldIds` and `FormFieldTypes` constants for each form
+- **Form State Access**: Use constant values for form state access (e.g., `form[FormFieldIds.EMAIL]`)
+- **Form Validation**: Use constant values in validation functions for field access and error handling
+- **Form Field Configuration**: Use constants in form field definitions (e.g., `id: FormFieldIds.NAME`)
+
+### Table Components
+- Create separate column definition files for table headers instead of defining them inline
+- Define proper table headers with sorting and resizing
+- Handle pagination with proper state management
+- Implement row click handlers when needed
+- Use proper loading states
+- Import column definitions: `import { tableHeaders } from "./column"`
+
+## Styling Standards
+
+### CSS Organization
+- Use component-specific CSS files (e.g., `login.css`, `header.css`)
+- Import CSS files in the component/module files
+- Use BEM-like naming conventions for CSS classes
+- Maintain consistent spacing and layout patterns
+- **No Inline Styles**: Never use inline CSS with `style=""` attributes - always use CSS classes or CSS variables
+- Use CSS variables from `src/styles/variables.css` for theming
+
+### CSS Classes
+- Use descriptive class names with underscores between words (e.g., `login_full_container`, `custom_table_container`)
+- Follow existing naming patterns in the project
+- **Class Naming**: Always use underscores (_) between words in CSS class names, not hyphens (-)
+- **Color Variables**: Always use CSS variables from `src/styles/variables.css` instead of hardcoded colors
+- **New Colors**: If a color is not present in `variables.css`, add it as a variable first, then use it
+- **No Gap Property**: Use `margin` properties instead of `gap` for spacing
+- **Color Consolidation**: Never create duplicate color variables with the same hex values - always reuse existing variables
+- **Color Duplication Check**: Before adding new color variables, check if the same hex value already exists in `variables.css`
+- **Color Variable Naming**: Use descriptive names that indicate the color's purpose (e.g., `--textPrimary`, `--iconColor`, `--statusActiveBg`)
+- **Flex Property**: Always define complete flex property values instead of shorthand (e.g., use `flex: 1 1 0` instead of `flex: 1`)
+- **Font Weight**: Use font-family names instead of numeric font-weight values (e.g., use `font-family: "bold"` instead of `font-weight: 600`)
+- **CSS Spacing**: Do not add blank lines between CSS properties within the same selector - keep properties grouped together
+- **CSS Zero Values**: Avoid unnecessary CSS properties with zero values (e.g., don't use `min-width: 0`, `margin: 0`, `padding: 0` unless specifically needed for layout)
+- **CSS Margin/Padding Shorthand**: Never use margin/padding shorthand when most values are zero - specify only the specific property that has a value (e.g., use `margin-bottom: 5px` instead of `margin: 0 0 5px 0`)
+- **Viewport Units**: Avoid using viewport units (vh, vw) for height and width - use percentage values instead
+
+## Product-Specific Rules (Event Photo Management)
+
+### Design Identity (Studio White SaaS)
+- **Backgrounds**: Always use pure white (`#FFFFFF`) or soft off-white (`#F8FAFC`). Do not use dark themes.
+- **Colors**: Use CSS variables from `src/styles/variables.css`. Define `--brandIndigo: #4F46E5;` and `--brandGreen: #10B981;` if not present.
+- **Spacing**: Follow the "No Gap Property" rule; use `margin-bottom` or `margin-right` instead of `gap`.
+- **Typography**: Use `font-family: "bold"` or `"medium"` instead of numeric weights like 600 or 500.
+- **UI Aesthetics**: Create clean, minimal interfaces with ample white space and subtle shadows for depth.
+- **Button Styles**: Use brand colors (indigo/green) for primary actions, with proper hover states and transitions.
+- **Card Components**: Use subtle borders or shadows to create visual separation without heavy borders.
+- **Form Inputs**: Use clean, modern input styles with proper focus states using brand colors.
+
+### Feature-Specific Implementation
+
+#### Google Drive Integration
+- Place the Google Auth logic in `src/services/drive.service.js` or `src/services/google-drive/` folder structure.
+- Use `APIStatus` constants for folder creation and upload states.
+- Handle OAuth flow with proper error states and user feedback.
+- Display authorization status clearly in the UI.
+
+#### Event Management
+- Use the Form Field Enum Pattern for event creation. Create `EventFormFieldIds` (NAME, DATE, FOLDER_ID) and `EventFormFieldTypes` in `src/utils/constants.js`.
+- Display events using table components with proper column definitions in separate files.
+- Use clean, organized layouts for event lists and creation forms.
+- Show event status and metadata clearly with proper visual hierarchy.
+
+#### Guest Portal (Public)
+- Use `src/pages/Guest/` for guest portal pages (e.g., `QRScan/`, `SelfieCapture/`, `PhotoResults/`).
+- Implement the camera/selfie capture using proper MediaDevices API with error handling.
+- Match results must be displayed in a grid using CSS for layout (no viewport units; use percentages).
+- Create intuitive, user-friendly interfaces for guests with clear instructions.
+- Use responsive grid layouts for photo results with proper image loading states.
+- Implement proper loading indicators during face matching process.
+
+#### Image Upload & Display
+- Show upload progress with visual indicators using brand colors.
+- Display images in clean, organized grids with proper aspect ratios.
+- Use lazy loading for image galleries to improve performance.
+- Show proper error states when images fail to load.
+
+### Data Standards
+- **Biometrics**: Never store guest images in the backend. Only send to the processing service and store the resulting numeric vector.
+- **Null Safety**: Always use `null` for optional event data or missing face matches; never `undefined`.
+- **Privacy**: Ensure guest data is handled securely and images are not persisted unnecessarily.
+- **Data Validation**: Validate all image uploads for type and size before processing.
+
+## API & Data Handling
+
+### Service Layer
+- Organize services by feature in `src/services/`
+- Use async/await for API calls
+- Handle errors properly with try/catch
+- Use proper error handling and user feedback
+- Implement proper loading states
+- Document API response structures with JSDoc
+
+### API Client
+- Use axios instance from `src/api/axiosInstance.js` for API calls
+- Organize API endpoints by feature in `src/api/` (e.g., `auth.api.js`, `user.api.js`)
+- Use proper error handling for API calls
+- Implement request/response interceptors when needed
+- Document API endpoints and their parameters
+
+### Constants & Configuration
+- Define API endpoints and formats in `src/utils/constants.js`
+- Use regex patterns for validation (email, password, etc.) in `src/utils/validators.util.js`
+- Define date formats consistently
+- Use constants for status values
+- Store configuration in `src/config/` files
+
+## Error Handling
+
+### Error Management
+- Handle API errors gracefully
+- Show user-friendly error messages
+- Log errors appropriately (use console.error for debugging)
+- Implement proper error boundaries for critical operations
+- Use try/catch blocks for async operations
+
+### Validation
+- Implement client-side validation before API calls
+- Use regex patterns for input validation (store in `src/utils/validators.util.js`)
+- Show validation errors immediately
+- Clear errors when user starts typing
+- Validate all user inputs before submission
+
+## Performance & Best Practices
+
+### JavaScript Patterns
+- Use proper event delegation when possible
+- Avoid memory leaks by cleaning up event listeners
+- Use debouncing/throttling for frequent events (scroll, resize, input)
+- Cache DOM queries when possible
+- Use proper async/await patterns
+- Avoid blocking the main thread with heavy operations
+
+### Code Quality
+- Follow ESLint configurations
+- Use modern ES6+ features
+- Implement proper error boundaries
+- Use proper loading states
+- Write clean, readable, and maintainable code
+- Add JSDoc comments for complex functions
+
+## File Structure Examples
+
+### Component File Structure
+```javascript
+import { APIStatus } from "../utils/constants";
+import "./component.css";
+
+/**
+ * Component class for handling component functionality
+ * @class Component
+ */
+class Component {
+  constructor(container) {
+    this.container = container;
+    this.state = {
+      isLoading: false,
+      data: null,
+    };
+    this.init();
+  }
+
+  init() {
+    this.render();
+    this.attachEventListeners();
+  }
+
+  render() {
+    // Render logic here
+  }
+
+  attachEventListeners() {
+    // Event listener setup
+  }
+
+  cleanup() {
+    // Cleanup event listeners
+  }
+}
+
+export default Component;
+```
+
+### Form Component File Structure with Constants
+```javascript
+import { FormFieldIds, FormFieldTypes, emailRegex, phoneNumberRegex } from "../utils/constants";
+import { validateEmail, validatePhone } from "../utils/validators.util";
+import "./form.css";
+
+/**
+ * Form state structure
+ * @typedef {Object} FormState
+ * @property {string} [FormFieldIds.NAME] - User name
+ * @property {string} [FormFieldIds.EMAIL] - User email
+ * @property {string} [FormFieldIds.PHONE_NUMBER] - User phone number
+ */
+
+class FormComponent {
+  constructor(container) {
+    this.container = container;
+    this.form = {
+      [FormFieldIds.NAME]: "",
+      [FormFieldIds.EMAIL]: "",
+      [FormFieldIds.PHONE_NUMBER]: "",
+    };
+    this.errors = {};
+    this.init();
+  }
+
+  init() {
+    this.render();
+    this.attachEventListeners();
+  }
+
+  /**
+   * Validates the form
+   * @returns {boolean} - True if form is valid
+   */
+  validate() {
+    if (!this.form[FormFieldIds.EMAIL]?.trim()) {
+      this.errors[FormFieldIds.EMAIL] = "Email is required";
+      return false;
+    }
+    if (!emailRegex.test(this.form[FormFieldIds.EMAIL].trim())) {
+      this.errors[FormFieldIds.EMAIL] = "Invalid email format";
+      return false;
+    }
+    return true;
+  }
+
+  handleSubmit(event) {
+    event.preventDefault();
+    if (this.validate()) {
+      // Submit form
+    }
+  }
+
+  render() {
+    // Render form
+  }
+
+  attachEventListeners() {
+    // Event listeners
+  }
+}
+
+export default FormComponent;
+```
+
+### Service File Structure
+```javascript
+import axiosInstance from "../api/axiosInstance";
+import { APIStatus } from "../utils/constants";
+
+/**
+ * Service state structure
+ * @typedef {Object} ServiceState
+ * @property {string} status - API status
+ * @property {Object|null} data - Service data
+ * @property {string|null} error - Error message
+ */
+
+class Service {
+  constructor() {
+    this.state = {
+      status: APIStatus.IDLE,
+      data: null,
+      error: null,
+    };
+  }
+
+  /**
+   * Fetches data from API
+   * @returns {Promise<Object>} - API response
+   */
+  async fetchData() {
+    try {
+      this.state.status = APIStatus.PENDING;
+      const response = await axiosInstance.get("/endpoint");
+      this.state.data = response.data;
+      this.state.status = APIStatus.FULFILLED;
+      return response.data;
+    } catch (error) {
+      this.state.error = error.message;
+      this.state.status = APIStatus.REJECTED;
+      throw error;
+    }
+  }
+}
+
+export default new Service();
+```
+
+### Store File Structure
+```javascript
+import { APIStatus } from "../utils/constants";
+
+/**
+ * Auth state structure
+ * @typedef {Object} AuthState
+ * @property {boolean} isAuthenticated - Authentication status
+ * @property {Object|null} user - User data
+ * @property {string} status - API status
+ */
+class AuthStore {
+  constructor() {
+    this.state = {
+      isAuthenticated: false,
+      user: null,
+      status: APIStatus.IDLE,
+    };
+    this.listeners = [];
+  }
+
+  /**
+   * Subscribes to state changes
+   * @param {Function} callback - Callback function
+   * @returns {Function} - Unsubscribe function
+   */
+  subscribe(callback) {
+    this.listeners.push(callback);
+    return () => {
+      this.listeners = this.listeners.filter((listener) => listener !== callback);
+    };
+  }
+
+  /**
+   * Notifies all listeners of state changes
+   */
+  notify() {
+    this.listeners.forEach((callback) => callback(this.state));
+  }
+
+  /**
+   * Updates the state
+   * @param {Partial<AuthState>} updates - State updates
+   */
+  setState(updates) {
+    this.state = { ...this.state, ...updates };
+    this.notify();
+  }
+}
+
+export default new AuthStore();
+```
+
+### API File Structure
+```javascript
+import axiosInstance from "./axiosInstance";
+
+/**
+ * User API endpoints
+ */
+const userAPI = {
+  /**
+   * Fetches user data
+   * @param {string} userId - User ID
+   * @returns {Promise<Object>} - User data
+   */
+  async getUser(userId) {
+    const response = await axiosInstance.get(`/users/${userId}`);
+    return response.data;
+  },
+
+  /**
+   * Updates user data
+   * @param {string} userId - User ID
+   * @param {Object} userData - User data to update
+   * @returns {Promise<Object>} - Updated user data
+   */
+  async updateUser(userId, userData) {
+    const response = await axiosInstance.put(`/users/${userId}`, userData);
+    return response.data;
+  },
+};
+
+export default userAPI;
+```
+
+## Enforcement Rules
+
+### Must Follow
+- Use tabs for indentation
+- Use double quotes for strings
+- Always include semicolons
+- Use proper JSDoc type documentation
+- Follow existing naming conventions
+- Use component-specific CSS files
+- Implement proper error handling
+- Use ES6 modules (import/export)
+- Place component types in JSDoc comments
+- Use CSS classes instead of inline styles
+- Create constants for fixed value sets (locations, statuses, roles, etc.)
+- Use constant values instead of string literals in code
+- Place all constants in `src/utils/constants.js` for centralized access
+- **Form Field Constants**: Always create and use constants for form field IDs and types
+- **Form Field Constant Pattern**: Create `FormFieldIds` and `FormFieldTypes` constants for each form
+- **Form State Access**: Use constant values for form state access (e.g., `form[FormFieldIds.EMAIL]`)
+- **Form Validation**: Use constant values in validation functions for field access and error handling
+- **Font Weight**: Use font-family names instead of numeric font-weight values
+- **CSS Spacing**: Keep CSS properties grouped together without blank lines within the same selector
+- **CSS Zero Values**: Only use zero values when specifically needed for layout behavior
+- **CSS Margin/Padding Shorthand**: Never use margin/padding shorthand when most values are zero
+- **Viewport Units**: Use percentage values instead of viewport units (vh, vw) for height and width
+- **Null Standard**: Always use `null` for optional/nullable values, never use `undefined` in type definitions
+- **Design Identity**: Always use pure white (`#FFFFFF`) or soft off-white (`#F8FAFC`) backgrounds - no dark themes
+- **Brand Colors**: Use `--brandIndigo: #4F46E5` and `--brandGreen: #10B981` from CSS variables for primary actions
+- **UI Spacing**: Use `margin-bottom` or `margin-right` instead of `gap` property for spacing
+- **Typography**: Use `font-family: "bold"` or `"medium"` instead of numeric font-weight values
+- **Event Form Constants**: Create `EventFormFieldIds` and `EventFormFieldTypes` constants for event forms
+- **Guest Portal Layout**: Use percentage-based responsive grids for photo results, not viewport units
+- **Biometric Privacy**: Never store guest images in backend - only send to processing service and store numeric vectors
+- **Image Validation**: Always validate image type and size before upload
+
+### Must Not Do
+- Use spaces instead of tabs
+- Use single quotes for strings
+- Omit semicolons
+- Use `any` or `unknown` without proper type guards
+- Create components outside proper directories
+- Mix inline styles with existing CSS setup
+- Ignore JavaScript errors
+- Use global variables without proper namespacing
+- Define types without JSDoc documentation
+- Use inline CSS with `style=""` attributes
+- Use string literals instead of constants for fixed value sets
+- Create constants in component files or separate constant files
+- Use hardcoded values when constants are available
+- **Form Field Anti-patterns**: Use string literals for form field IDs (e.g., `"name"`, `"email"`) instead of constants
+- **Form Field Anti-patterns**: Use string literals for form field types (e.g., `"input"`, `"select"`) instead of constants
+- **Form Field Anti-patterns**: Access form state with string literals (e.g., `form["email"]`) instead of constant values
+- **Form Field Anti-patterns**: Define form field configurations with string literals instead of constant values
+- **Font Weight Anti-patterns**: Use numeric font-weight values (500, 600, 700, etc.) instead of font-family names
+- **CSS Spacing Anti-patterns**: Add blank lines between CSS properties within the same selector
+- **CSS Zero Values Anti-patterns**: Use unnecessary zero values when not needed for layout
+- **CSS Margin/Padding Shorthand Anti-patterns**: Use margin/padding shorthand with mostly zero values
+- **Viewport Units Anti-patterns**: Use viewport units (vh, vw) instead of percentage values
+- **Color Anti-patterns**: Create duplicate color variables with the same hex values
+- **Color Anti-patterns**: Use hardcoded hex colors in CSS files when CSS variables exist
+- **Color Anti-patterns**: Use generic color names instead of descriptive names
+- **Null Anti-patterns**: Use `undefined` in type definitions for optional/nullable values instead of `null`
+- **Design Anti-patterns**: Use dark themes or backgrounds other than white/off-white
+- **Design Anti-patterns**: Use hardcoded brand colors instead of CSS variables
+- **Design Anti-patterns**: Use `gap` property instead of margin properties for spacing
+- **Design Anti-patterns**: Use numeric font-weight values (500, 600, 700) instead of font-family names
+- **Event Form Anti-patterns**: Use string literals for event form field IDs instead of constants
+- **Guest Portal Anti-patterns**: Use viewport units (vh, vw) for photo grid layouts instead of percentages
+- **Biometric Anti-patterns**: Store guest images in backend or client storage
+- **Image Upload Anti-patterns**: Upload images without validating type and size first
+
+### Auto-fix Suggestions
+- Convert spaces to tabs
+- Convert single quotes to double quotes
+- Add missing semicolons
+- Organize imports properly
+- Add proper JSDoc type documentation
+- Follow existing file naming patterns
+- Replace inline styles with CSS classes
+- Replace string literals with constant values
+- Create constants for repeated string values
+- Import constants from utils instead of defining locally
+- **Form Field Constant Fixes**: Replace string literals in form field IDs with constant values
+- **Form Field Constant Fixes**: Replace string literals in form field types with constant values
+- **Form Field Constant Fixes**: Replace string literals in form state access with constant values
+- **Form Field Constant Fixes**: Create `FormFieldIds` and `FormFieldTypes` constants for forms using string literals
+- **Font Weight Fixes**: Replace numeric font-weight values with appropriate font-family names
+- **CSS Spacing Fixes**: Remove blank lines between CSS properties within the same selector
+- **CSS Zero Values Fixes**: Remove unnecessary zero values unless specifically needed for layout behavior
+- **CSS Margin/Padding Shorthand Fixes**: Replace margin/padding shorthand with mostly zero values with specific properties
+- **Viewport Units Fixes**: Replace viewport units (vh, vw) with percentage values for height and width
+- **Color Fixes**: Remove duplicate color variables and update all references to use the consolidated variable
+- **Color Fixes**: Replace hardcoded hex colors in CSS with existing CSS variables
+- **Color Fixes**: Consolidate color variables with identical hex values into single reusable variables
+- **Null Fixes**: Replace `undefined` with `null` in type definitions for optional/nullable values
+- **Design Fixes**: Replace dark backgrounds with white (`#FFFFFF`) or off-white (`#F8FAFC`)
+- **Design Fixes**: Replace hardcoded brand colors with CSS variables (`--brandIndigo`, `--brandGreen`)
+- **Design Fixes**: Replace `gap` property with `margin-bottom` or `margin-right` for spacing
+- **Design Fixes**: Replace numeric font-weight values with font-family names ("bold", "medium")
+- **Event Form Fixes**: Create `EventFormFieldIds` and `EventFormFieldTypes` constants for event forms
+- **Guest Portal Fixes**: Replace viewport units (vh, vw) with percentage values in photo grid layouts
+- **Biometric Fixes**: Remove any code that stores guest images - only send to processing service
+- **Image Upload Fixes**: Add validation for image type and size before upload operations

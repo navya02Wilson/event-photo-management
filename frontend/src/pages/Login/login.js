@@ -333,7 +333,9 @@ class Login {
 			if (buttonText) {
 				buttonText.textContent = "Sign In";
 			}
-			// TODO: Handle successful login (redirect to dashboard)
+			// TODO: Handle successful login (redirect to Google Drive auth page)
+			// Redirect to Google Drive authorization page after login
+			router.navigate("/google-drive-auth");
 			// TODO: Handle login error (display error message)
 		}, 1000);
 	}

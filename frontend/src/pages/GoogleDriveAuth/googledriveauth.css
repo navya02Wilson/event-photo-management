@@ -1,0 +1,291 @@
+.drive_auth_container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100vh;
+	width: 100vw;
+	background-color: #ffffff;
+	font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	margin: 0;
+	padding: 40px;
+	box-sizing: border-box;
+}
+
+.drive_auth_card_branding {
+	margin-bottom: 32px;
+	padding-bottom: 24px;
+	border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+	width: 100%;
+}
+
+.drive_auth_logo {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+}
+
+.drive_auth_logo_icon {
+	font-size: 40px;
+	filter: drop-shadow(0 4px 6px rgba(59, 130, 246, 0.1));
+}
+
+.drive_auth_logo_text {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.drive_auth_logo_title {
+	font-size: 28px;
+	font-weight: 800;
+	color: #3b82f6;
+	margin: 0;
+	letter-spacing: -1px;
+	line-height: 1;
+}
+
+.drive_auth_logo_subtitle {
+	font-size: 14px;
+	font-weight: 500;
+	color: #64748b;
+	margin: 4px 0 0 0;
+}
+
+.drive_auth_form_container {
+	width: 100%;
+	max-width: 500px;
+	padding: 48px;
+	background: #ffffff;
+	border-radius: 24px;
+	box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.15);
+	border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.drive_auth_content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+}
+
+.drive_auth_icon_wrapper {
+	width: 80px;
+	height: 80px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+	border-radius: 20px;
+	margin-bottom: 24px;
+	padding: 16px;
+}
+
+.drive_auth_google_icon_container {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.drive_auth_google_icon {
+	width: 48px;
+	height: 48px;
+}
+
+.drive_auth_title {
+	font-size: 32px;
+	font-weight: 700;
+	color: #1e293b;
+	margin-bottom: 12px;
+	letter-spacing: -0.02em;
+}
+
+.drive_auth_subtitle {
+	font-size: 15px;
+	color: #64748b;
+	margin-bottom: 32px;
+	line-height: 1.6;
+	max-width: 420px;
+}
+
+.drive_auth_features {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin-bottom: 32px;
+	text-align: left;
+}
+
+.drive_auth_feature {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px;
+	background: #f8fafc;
+	border-radius: 8px;
+	border: 1px solid #e2e8f0;
+}
+
+.drive_auth_feature_icon {
+	color: #3b82f6;
+	flex-shrink: 0;
+}
+
+.drive_auth_feature span {
+	font-size: 14px;
+	color: #475569;
+	font-weight: 500;
+}
+
+.drive_auth_button {
+	width: 100%;
+	padding: 14px 24px;
+	font-size: 16px;
+	font-weight: 600;
+	color: #ffffff;
+	background: #3b82f6;
+	border: none;
+	border-radius: 8px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	letter-spacing: 0.01em;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	margin-bottom: 24px;
+}
+
+.drive_auth_button:hover {
+	background: #2563eb;
+	box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+	transform: translateY(-1px);
+}
+
+.drive_auth_button:active {
+	transform: scale(0.99);
+}
+
+.drive_auth_button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+	transform: none;
+}
+
+.drive_auth_button_icon {
+	width: 20px;
+	height: 20px;
+	flex-shrink: 0;
+}
+
+.drive_auth_button_text {
+	font-weight: 600;
+}
+
+.drive_auth_info {
+	width: 100%;
+}
+
+.drive_auth_info_text {
+	font-size: 13px;
+	color: #64748b;
+	line-height: 1.5;
+	text-align: center;
+}
+
+.drive_auth_success_message {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 100vh;
+	padding: 40px;
+}
+
+.drive_auth_success_content {
+	text-align: center;
+	max-width: 500px;
+	padding: 48px;
+	background: #ffffff;
+	border-radius: 24px;
+	box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.15);
+	border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.drive_auth_success_icon {
+	color: #10b981;
+	margin-bottom: 24px;
+}
+
+.drive_auth_success_title {
+	font-size: 28px;
+	font-weight: 700;
+	color: #1e293b;
+	margin-bottom: 12px;
+	letter-spacing: -0.02em;
+}
+
+.drive_auth_success_text {
+	font-size: 15px;
+	color: #64748b;
+	margin-bottom: 32px;
+	line-height: 1.6;
+}
+
+.drive_auth_success_button {
+	padding: 14px 24px;
+	font-size: 16px;
+	font-weight: 600;
+	color: #ffffff;
+	background: #3b82f6;
+	border: none;
+	border-radius: 8px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	letter-spacing: 0.01em;
+}
+
+.drive_auth_success_button:hover {
+	background: #2563eb;
+	box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+	transform: translateY(-1px);
+}
+
+.drive_auth_success_button:active {
+	transform: scale(0.99);
+}
+
+@media (max-width: 768px) {
+	.drive_auth_container {
+		padding: 20px;
+	}
+
+	.drive_auth_form_container {
+		padding: 32px 24px;
+	}
+
+	.drive_auth_title {
+		font-size: 28px;
+	}
+
+	.drive_auth_subtitle {
+		font-size: 14px;
+	}
+
+	.drive_auth_icon_wrapper {
+		width: 64px;
+		height: 64px;
+		padding: 12px;
+	}
+
+	.drive_auth_google_icon {
+		width: 40px;
+		height: 40px;
+	}
+
+	.drive_auth_success_content {
+		padding: 32px 24px;
+	}
+}
+

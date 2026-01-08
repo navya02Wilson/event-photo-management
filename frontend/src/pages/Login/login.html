@@ -1,0 +1,48 @@
+<div class="login_container">
+	<div class="login_card">
+		<div class="login_header">
+			<h1 class="login_title">Welcome Back</h1>
+			<p class="login_subtitle">Sign in to your account to continue</p>
+		</div>
+		<form class="login_form" id="loginForm">
+			<div class="login_form_group">
+				<label for="email" class="login_label">Email</label>
+				<input
+					type="email"
+					id="email"
+					name="email"
+					class="login_input"
+					placeholder="Enter your email"
+					autocomplete="email"
+					required
+				/>
+				<span class="login_error" id="emailError" role="alert"></span>
+			</div>
+			<div class="login_form_group">
+				<label for="password" class="login_label">Password</label>
+				<input
+					type="password"
+					id="password"
+					name="password"
+					class="login_input"
+					placeholder="Enter your password"
+					autocomplete="current-password"
+					required
+				/>
+				<span class="login_error" id="passwordError" role="alert"></span>
+			</div>
+			<div class="login_links">
+				<a href="/register" class="login_link" id="forgotPasswordLink">Forgot Password?</a>
+			</div>
+			<button type="submit" class="login_button" id="loginButton">
+				<span class="login_button_text">Sign In</span>
+			</button>
+		</form>
+		<div class="login_footer">
+			<p class="login_footer_text">
+				Don't have an account?
+				<a href="/register" class="login_link" id="registerLink">Register here</a>
+			</p>
+		</div>
+	</div>
+</div>

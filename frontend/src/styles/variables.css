@@ -1,0 +1,43 @@
+:root {
+	/* Brand Colors - Pink/Coral Gradient Theme */
+	--brandPink: #EE4D68;
+	--brandPinkLight: #F79B9C;
+	--brandCoral: #FF6B6B;
+	--brandOrange: #FFA07A;
+	--brandIndigo: #4F46E5;
+	--brandGreen: #10B981;
+	/* Background Colors */
+	--bgPrimary: #FFFFFF;
+	--bgSecondary: #F9FAFB;
+	/* Text Colors */
+	--textPrimary: #333333;
+	--textSecondary: #666666;
+	--textTertiary: #AAAAAA;
+	--textError: #EF4444;
+	--textLink: #EE4D68;
+	--textWhite: #FFFFFF;
+	/* Border Colors */
+	--borderPrimary: #E5E7EB;
+	--borderLight: #D0D0D0;
+	--borderFocus: #EE4D68;
+	--borderError: #EF4444;
+	/* Input Colors */
+	--inputBg: #FFFFFF;
+	--inputBorder: #D0D0D0;
+	--inputFocusBorder: #EE4D68;
+	--inputErrorBorder: #EF4444;
+	/* Button Colors */
+	--buttonPrimaryBg: linear-gradient(135deg, #EE4D68 0%, #F79B9C 100%);
+	--buttonPrimaryHover: linear-gradient(135deg, #E03D58 0%, #E88B8C 100%);
+	--buttonPrimaryText: #FFFFFF;
+	--buttonFacebookBg: #3B5998;
+	--buttonTwitterBg: #1DA1F2;
+	--buttonSecondaryBg: #F3F4F6;
+	--buttonSecondaryHover: #E5E7EB;
+	--buttonSecondaryText: #1F2937;
+	/* Shadow */
+	--shadowSm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	--shadowMd: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+	--shadowLg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+	--shadowPink: 0 4px 12px rgba(238, 77, 104, 0.3);
+}

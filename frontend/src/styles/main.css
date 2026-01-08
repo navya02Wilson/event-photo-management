@@ -1,0 +1,42 @@
+#app {
+	width: 100%;
+	height: 100%;
+}
+
+.not_found_container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 100%;
+	width: 100%;
+	background-color: var(--bgSecondary);
+}
+
+.not_found_content {
+	text-align: center;
+}
+
+.not_found_title {
+	font-size: 32px;
+	font-family: "bold";
+	color: var(--textPrimary);
+	margin-bottom: 16px;
+}
+
+.not_found_text {
+	font-size: 16px;
+	color: var(--textSecondary);
+	margin-bottom: 24px;
+}
+
+.not_found_link {
+	font-size: 16px;
+	color: var(--textLink);
+	text-decoration: none;
+	transition: color 0.2s ease;
+}
+
+.not_found_link:hover {
+	color: var(--brandIndigo);
+	text-decoration: underline;
+}

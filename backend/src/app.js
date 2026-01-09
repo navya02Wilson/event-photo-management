@@ -32,6 +32,10 @@ app.use((req, res, next) => {
 	next();
 });
 
+// Google OAuth callback route (must be before /api routes to match Google Cloud Console redirect URI)
+const driveController = require("./controllers/drive.controller");
+app.get("/oauth/google/callback", driveController.handleCallback);
+
 // API routes
 app.use("/api", routes);
 

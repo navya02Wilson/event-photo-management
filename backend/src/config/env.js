@@ -36,7 +36,21 @@ const env = {
 	google: {
 		clientId: process.env.GOOGLE_CLIENT_ID || "",
 		clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-		redirectUri: process.env.GOOGLE_REDIRECT_URI || "http://localhost:3000/api/drive/callback",
+		// Construct redirect URI dynamically from backend URL, or use explicit override
+		// According to Google OAuth 2.0 documentation, this must exactly match Google Cloud Console
+		// Reference: https://developers.google.com/identity/protocols/oauth2/web-server
+		redirectUri: (() => {
+			let uri;
+			if (process.env.GOOGLE_REDIRECT_URI) {
+				uri = process.env.GOOGLE_REDIRECT_URI;
+			} else {
+				const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || "3000"}`;
+				uri = `${backendUrl}/oauth/google/callback`;
+			}
+			// Normalize: trim whitespace and remove trailing slashes
+			// This ensures exact match with Google Cloud Console
+			return uri.trim().replace(/\/+$/, "");
+		})(),
 	},
 	
 	// Application URLs

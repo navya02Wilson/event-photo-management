@@ -16,11 +16,10 @@ const { authenticate } = require("../middlewares/auth.middleware");
 router.get("/auth-url", authenticate, driveController.getAuthUrl);
 
 /**
- * @route   GET /api/drive/callback
- * @desc    Handle Google OAuth callback
- * @access  Public (called by Google, state parameter contains user ID)
+ * Note: The OAuth callback route is handled at /oauth/google/callback in app.js
+ * This matches the redirect URI configured in Google Cloud Console
+ * The route is defined in app.js to ensure it's accessible without the /api prefix
  */
-router.get("/callback", driveController.handleCallback);
 
 /**
  * @route   GET /api/drive/status

@@ -178,16 +178,23 @@ class GoogleDriveAuth {
 		try {
 			// Call backend API to get Google Drive authorization URL
 			const response = await driveAPI.getAuthUrl();
+			console.log("Auth URL response:", response);
+			
 			const { authUrl } = response;
 
 			if (authUrl) {
 				// Redirect to Google OAuth URL
 				window.location.href = authUrl;
 			} else {
-				throw new Error("No authorization URL received");
+				throw new Error("No authorization URL received from server. Response: " + JSON.stringify(response));
 			}
 		} catch (error) {
 			console.error("Failed to get authorization URL:", error);
+			console.error("Error details:", {
+				message: error.message,
+				response: error.response?.data,
+				status: error.response?.status,
+			});
 			
 			// Reset button state
 			this.isAuthorizing = false;
@@ -198,8 +205,25 @@ class GoogleDriveAuth {
 				buttonText.textContent = "Authorize Google Drive";
 			}
 
-			// Show error message
-			const errorMessage = error.response?.data?.message || error.message || "Failed to initiate Google Drive authorization. Please try again.";
+			// Show error message with more details
+			let errorMessage = "Failed to initiate Google Drive authorization.";
+			
+			if (error.response) {
+				// Server responded with an error
+				errorMessage = error.response.data?.message || error.response.data?.error || errorMessage;
+				if (error.response.status === 401) {
+					errorMessage = "Please log in first to authorize Google Drive.";
+				} else if (error.response.status === 500) {
+					errorMessage = "Server error. Please check if Google OAuth credentials are configured.";
+				}
+			} else if (error.request) {
+				// Request was made but no response received
+				errorMessage = "Unable to connect to server. Please check if the backend is running.";
+			} else {
+				// Error setting up the request
+				errorMessage = error.message || errorMessage;
+			}
+			
 			alert(errorMessage);
 		}
 	}

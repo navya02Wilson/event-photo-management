@@ -126,11 +126,49 @@ const getStorageProviderId = async (providerName) => {
 	return result.rows[0].id;
 };
 
+/**
+ * Update QR code URL for an event
+ * @param {number} id - Event ID
+ * @param {string} qrCodeUrl - QR code URL
+ * @param {number} updatedBy - User ID who updated
+ * @returns {Promise<Event|null>} Updated event or null
+ */
+const updateQrCodeUrl = async (id, qrCodeUrl, updatedBy = null) => {
+	const result = await query(
+		`UPDATE events 
+		SET qr_code_url = $1, updated_at = CURRENT_TIMESTAMP, updated_by = $2
+		WHERE id = $3
+		RETURNING *`,
+		[qrCodeUrl, updatedBy, id]
+	);
+
+	if (result.rows.length === 0) {
+		return null;
+	}
+
+	const row = result.rows[0];
+	return new Event({
+		id: row.id,
+		eventName: row.event_name,
+		userId: row.user_id,
+		storageProviderId: row.storage_provider_id,
+		storageFolderId: row.storage_folder_id,
+		eventDate: row.event_date,
+		qrCodeUrl: row.qr_code_url,
+		status: row.status,
+		createdAt: row.created_at,
+		createdBy: row.created_by,
+		updatedAt: row.updated_at,
+		updatedBy: row.updated_by,
+	});
+};
+
 module.exports = {
 	create,
 	findById,
 	findByUserId,
 	getStorageProviderId,
+	updateQrCodeUrl,
 };
 
 

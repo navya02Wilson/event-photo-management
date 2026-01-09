@@ -645,3 +645,78 @@
 	}
 }
 
+/* QR Code Modal Styles */
+.dashboard_qrcode_modal {
+	max-width: 500px;
+}
+
+.dashboard_qrcode_content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 8px 0;
+}
+
+.dashboard_qrcode_event_name {
+	font-size: 20px;
+	font-weight: 700;
+	color: #1e293b;
+	margin: 0 0 24px 0;
+	text-align: center;
+}
+
+.dashboard_qrcode_image_wrapper {
+	background: #ffffff;
+	border: 2px solid #e2e8f0;
+	border-radius: 12px;
+	padding: 16px;
+	margin-bottom: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.dashboard_qrcode_image {
+	width: 300px;
+	height: 300px;
+	display: block;
+}
+
+.dashboard_qrcode_text {
+	font-size: 14px;
+	color: #64748b;
+	margin: 0 0 16px 0;
+	text-align: center;
+}
+
+.dashboard_qrcode_url_wrapper {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 16px;
+	background: #f8fafc;
+	border-radius: 8px;
+}
+
+.dashboard_qrcode_url_label {
+	font-size: 12px;
+	font-weight: 600;
+	color: #475569;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.dashboard_qrcode_url {
+	font-size: 13px;
+	color: #3b82f6;
+	text-decoration: none;
+	word-break: break-all;
+	transition: color 0.2s ease;
+}
+
+.dashboard_qrcode_url:hover {
+	color: #2563eb;
+	text-decoration: underline;
+}
+

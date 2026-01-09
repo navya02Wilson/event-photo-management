@@ -1,0 +1,138 @@
+.public_event_container {
+	min-height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	padding: 24px;
+}
+
+.public_event_content {
+	width: 100%;
+	max-width: 600px;
+}
+
+.public_event_header {
+	text-align: center;
+	margin-bottom: 32px;
+}
+
+.public_event_logo {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+}
+
+.public_event_logo_icon {
+	font-size: 48px;
+}
+
+.public_event_logo_title {
+	font-size: 32px;
+	font-weight: 700;
+	color: #ffffff;
+	margin: 0;
+}
+
+.public_event_card {
+	background: #ffffff;
+	border-radius: 16px;
+	padding: 48px 32px;
+	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+	text-align: center;
+}
+
+.public_event_icon_wrapper {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 24px;
+}
+
+.public_event_icon {
+	color: #3b82f6;
+}
+
+.public_event_title {
+	font-size: 28px;
+	font-weight: 700;
+	color: #1e293b;
+	margin: 0 0 24px 0;
+}
+
+.public_event_info {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+}
+
+.public_event_info_item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: #64748b;
+	font-size: 16px;
+}
+
+.public_event_info_item svg {
+	color: #64748b;
+}
+
+.public_event_loading {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+}
+
+.public_event_loading_spinner {
+	width: 48px;
+	height: 48px;
+	border: 4px solid rgba(255, 255, 255, 0.3);
+	border-top-color: #ffffff;
+	border-radius: 50%;
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.public_event_loading_text {
+	color: #ffffff;
+	font-size: 18px;
+	font-weight: 500;
+}
+
+.public_event_error {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	text-align: center;
+}
+
+.public_event_error_icon {
+	color: #ffffff;
+	margin-bottom: 8px;
+}
+
+.public_event_error_title {
+	font-size: 24px;
+	font-weight: 700;
+	color: #ffffff;
+	margin: 0;
+}
+
+.public_event_error_text {
+	font-size: 16px;
+	color: rgba(255, 255, 255, 0.9);
+	margin: 0;
+}
+

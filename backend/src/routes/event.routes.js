@@ -29,6 +29,13 @@ router.get("/", authenticate, eventController.getUserEvents);
  */
 router.get("/:id", authenticate, eventController.getEventById);
 
+/**
+ * @route   POST /api/events/:id/qrcode
+ * @desc    Generate QR code for an event
+ * @access  Private
+ */
+router.post("/:id/qrcode", authenticate, eventController.generateQrCode);
+
 module.exports = router;
 
 

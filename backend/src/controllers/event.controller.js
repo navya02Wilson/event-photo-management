@@ -62,10 +62,62 @@ const getUserEvents = asyncHandler(async (req, res) => {
 	);
 });
 
+/**
+ * Generate QR code for an event
+ * POST /api/events/:id/qrcode
+ */
+const generateQrCode = asyncHandler(async (req, res) => {
+	const userId = Number(req.user.id); // Ensure userId is a number
+	const eventId = parseInt(req.params.id, 10);
+
+	if (isNaN(eventId)) {
+		return res.status(400).json({
+			success: false,
+			message: "Invalid event ID",
+		});
+	}
+
+	if (isNaN(userId)) {
+		return res.status(400).json({
+			success: false,
+			message: "Invalid user ID",
+		});
+	}
+
+	const event = await eventService.generateQrCode(eventId, userId);
+
+	res.status(200).json(
+		new ApiResponse(200, { event }, "QR code generated successfully")
+	);
+});
+
+/**
+ * Get event by ID (public access)
+ * GET /api/public/events/:id
+ */
+const getPublicEventById = asyncHandler(async (req, res) => {
+	const eventId = parseInt(req.params.id, 10);
+
+	if (isNaN(eventId)) {
+		return res.status(400).json({
+			success: false,
+			message: "Invalid event ID",
+		});
+	}
+
+	const event = await eventService.getPublicEventById(eventId);
+
+	res.status(200).json(
+		new ApiResponse(200, { event }, "Event retrieved successfully")
+	);
+});
+
 module.exports = {
 	createEvent,
 	getEventById,
 	getUserEvents,
+	generateQrCode,
+	getPublicEventById,
 };
 
 

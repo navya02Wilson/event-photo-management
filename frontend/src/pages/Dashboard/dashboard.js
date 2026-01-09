@@ -1,5 +1,6 @@
 import router from "../../routes/router";
 import eventAPI from "../../api/event.api";
+import QRCode from "qrcode";
 import "./dashboard.css";
 
 /**
@@ -388,6 +389,9 @@ class Dashboard {
 				${this.events.map((event) => this.renderEventCard(event)).join("")}
 			</div>
 		`;
+
+		// Attach event listeners to "View Details" buttons
+		this.attachEventCardListeners();
 	}
 
 	/**
@@ -428,10 +432,148 @@ class Dashboard {
 				</div>
 				<div class="dashboard_event_card_footer">
 					<span class="dashboard_event_card_created">Created: ${createdDate}</span>
-					<button type="button" class="dashboard_event_card_button">View Details</button>
+					<button type="button" class="dashboard_event_card_button" data-event-id="${event.id}">View Details</button>
 				</div>
 			</div>
 		`;
+	}
+
+	/**
+	 * Attach event listeners to event card buttons
+	 */
+	attachEventCardListeners() {
+		const viewDetailsButtons = this.container.querySelectorAll(".dashboard_event_card_button");
+		viewDetailsButtons.forEach((button) => {
+			button.addEventListener("click", async (e) => {
+				const eventId = parseInt(button.getAttribute("data-event-id"), 10);
+				if (eventId) {
+					await this.handleViewDetails(eventId);
+				}
+			});
+		});
+	}
+
+	/**
+	 * Handle "View Details" button click - generate QR code and show modal
+	 */
+	async handleViewDetails(eventId) {
+		try {
+			// Generate QR code URL
+			const response = await eventAPI.generateQrCode(eventId);
+			const event = response.event || response.data?.event || response;
+			
+			if (!event || !event.qrCodeUrl) {
+				throw new Error("Failed to generate QR code");
+			}
+
+			// Generate QR code image
+			const qrCodeDataUrl = await QRCode.toDataURL(event.qrCodeUrl, {
+				width: 300,
+				margin: 2,
+			});
+
+			// Show QR code modal
+			this.showQrCodeModal(event, qrCodeDataUrl);
+		} catch (error) {
+			console.error("Failed to generate QR code:", error);
+			const errorMessage = error.response?.data?.message || error.message || "Failed to generate QR code. Please try again.";
+			alert(errorMessage);
+		}
+	}
+
+	/**
+	 * Show QR code modal
+	 */
+	showQrCodeModal(event, qrCodeDataUrl) {
+		const modal = this.container.querySelector("#qrCodeModal");
+		if (!modal) {
+			// Create modal if it doesn't exist
+			this.createQrCodeModal();
+		}
+
+		const modalElement = this.container.querySelector("#qrCodeModal");
+		const qrCodeImage = this.container.querySelector("#qrCodeImage");
+		const eventName = this.container.querySelector("#qrCodeEventName");
+		const qrCodeUrl = this.container.querySelector("#qrCodeUrl");
+
+		if (qrCodeImage) {
+			qrCodeImage.src = qrCodeDataUrl;
+			qrCodeImage.alt = `QR Code for ${event.eventName}`;
+		}
+
+		if (eventName) {
+			eventName.textContent = event.eventName;
+		}
+
+		if (qrCodeUrl) {
+			qrCodeUrl.textContent = event.qrCodeUrl;
+			qrCodeUrl.href = event.qrCodeUrl;
+		}
+
+		if (modalElement) {
+			modalElement.style.display = "flex";
+		}
+
+		// Attach close button listener
+		const closeButton = this.container.querySelector("#closeQrCodeModal");
+		if (closeButton) {
+			closeButton.onclick = () => this.closeQrCodeModal();
+		}
+
+		// Close on overlay click
+		if (modalElement) {
+			modalElement.onclick = (e) => {
+				if (e.target === modalElement) {
+					this.closeQrCodeModal();
+				}
+			};
+		}
+	}
+
+	/**
+	 * Create QR code modal HTML
+	 */
+	createQrCodeModal() {
+		const modalHTML = `
+			<div class="dashboard_modal_overlay" id="qrCodeModal" style="display: none;">
+				<div class="dashboard_modal_container dashboard_qrcode_modal">
+					<div class="dashboard_modal_header">
+						<h2 class="dashboard_modal_title">Event QR Code</h2>
+						<button type="button" class="dashboard_modal_close" id="closeQrCodeModal">
+							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<line x1="18" y1="6" x2="6" y2="18"></line>
+								<line x1="6" y1="6" x2="18" y2="18"></line>
+							</svg>
+						</button>
+					</div>
+					<div class="dashboard_modal_content">
+						<div class="dashboard_qrcode_content">
+							<h3 class="dashboard_qrcode_event_name" id="qrCodeEventName"></h3>
+							<div class="dashboard_qrcode_image_wrapper">
+								<img id="qrCodeImage" src="" alt="QR Code" class="dashboard_qrcode_image" />
+							</div>
+							<p class="dashboard_qrcode_text">Scan this QR code to view the event</p>
+							<div class="dashboard_qrcode_url_wrapper">
+								<label class="dashboard_qrcode_url_label">Public URL:</label>
+								<a id="qrCodeUrl" href="" target="_blank" class="dashboard_qrcode_url"></a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		`;
+
+		this.container.insertAdjacentHTML("beforeend", modalHTML);
+	}
+
+	/**
+	 * Close QR code modal
+	 */
+	closeQrCodeModal() {
+		const modal = this.container.querySelector("#qrCodeModal");
+		if (modal) {
+			modal.style.display = "none";
+		}
 	}
 
 	/**

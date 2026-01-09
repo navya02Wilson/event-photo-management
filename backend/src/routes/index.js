@@ -9,6 +9,7 @@ const router = express.Router();
 const authRoutes = require("./auth.routes");
 const driveRoutes = require("./drive.routes");
 const eventRoutes = require("./event.routes");
+const eventController = require("../controllers/event.controller");
 
 /**
  * Health check endpoint
@@ -36,6 +37,14 @@ router.get("/", (req, res) => {
 router.use("/auth", authRoutes);
 router.use("/drive", driveRoutes);
 router.use("/events", eventRoutes);
+
+// Public routes (no authentication required)
+/**
+ * @route   GET /api/public/events/:id
+ * @desc    Get event by ID (public access)
+ * @access  Public
+ */
+router.get("/public/events/:id", eventController.getPublicEventById);
 
 module.exports = router;
 

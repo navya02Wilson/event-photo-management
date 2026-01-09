@@ -76,8 +76,11 @@ const getEventById = async (eventId, userId) => {
 		throw new ApiError(404, "Event not found");
 	}
 
-	// Check if user owns the event
-	if (event.userId !== userId) {
+	// Check if user owns the event (convert both to numbers for comparison)
+	const eventUserId = Number(event.userId);
+	const requestUserId = Number(userId);
+	
+	if (eventUserId !== requestUserId) {
 		throw new ApiError(403, "Unauthorized to access this event");
 	}
 
@@ -94,10 +97,64 @@ const getUserEvents = async (userId) => {
 	return events.map((event) => event.toJSON());
 };
 
+/**
+ * Generate QR code URL for an event
+ * @param {number} eventId - Event ID
+ * @param {number} userId - User ID (for authorization check)
+ * @returns {Promise<Object>} Event with QR code URL
+ * @throws {ApiError} If event not found or unauthorized
+ */
+const generateQrCode = async (eventId, userId) => {
+	const event = await eventRepository.findById(eventId);
+
+	if (!event) {
+		throw new ApiError(404, "Event not found");
+	}
+
+	// Check if user owns the event (convert both to numbers for comparison)
+	const eventUserId = Number(event.userId);
+	const requestUserId = Number(userId);
+	
+	if (eventUserId !== requestUserId) {
+		throw new ApiError(403, "Unauthorized to access this event");
+	}
+
+	// Generate public URL for the event
+	const env = require("../config/env");
+	const publicUrl = `${env.app.frontendUrl}/public/event/${eventId}`;
+
+	// Update QR code URL in database
+	const updatedEvent = await eventRepository.updateQrCodeUrl(
+		eventId,
+		publicUrl,
+		userId
+	);
+
+	return updatedEvent.toJSON();
+};
+
+/**
+ * Get event by ID (public access, no authentication required)
+ * @param {number} eventId - Event ID
+ * @returns {Promise<Object>} Event data
+ * @throws {ApiError} If event not found
+ */
+const getPublicEventById = async (eventId) => {
+	const event = await eventRepository.findById(eventId);
+
+	if (!event) {
+		throw new ApiError(404, "Event not found");
+	}
+
+	return event.toJSON();
+};
+
 module.exports = {
 	createEvent,
 	getEventById,
 	getUserEvents,
+	generateQrCode,
+	getPublicEventById,
 };
 
 

@@ -2,6 +2,7 @@ import Login from "../pages/Login/login.js";
 import GoogleDriveAuth from "../pages/GoogleDriveAuth/googledriveauth.js";
 import CreateEvent from "../pages/CreateEvent/createevent.js";
 import Dashboard from "../pages/Dashboard/dashboard.js";
+import PublicEvent from "../pages/PublicEvent/publicevent.js";
 
 /**
  * Router class for handling page navigation
@@ -17,6 +18,10 @@ class Router {
 			"/google-drive-auth": GoogleDriveAuth,
 			"/create-event": CreateEvent,
 			"/dashboard": Dashboard,
+		};
+		// Public routes (no authentication required)
+		this.publicRoutes = {
+			"/public/event": PublicEvent,
 		};
 		this.currentComponent = null;
 		this.container = null;
@@ -37,7 +42,14 @@ class Router {
 	 */
 	handleRoute() {
 		const path = window.location.pathname;
-		const Component = this.routes[path] || this.routes["/"];
+		
+		// Check if it's a public route (starts with /public/event/)
+		let Component = null;
+		if (path.startsWith("/public/event/")) {
+			Component = this.publicRoutes["/public/event"];
+		} else {
+			Component = this.routes[path] || this.routes["/"];
+		}
 
 		if (this.currentComponent && this.currentComponent.cleanup) {
 			this.currentComponent.cleanup();

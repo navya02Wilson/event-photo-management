@@ -17,6 +17,7 @@ class Dashboard {
 		this.isSubmitting = false;
 		this.currentEventId = null;
 		this.isUploadingPhotos = false;
+		this.selectedFiles = [];
 		this.init();
 	}
 
@@ -172,17 +173,17 @@ class Dashboard {
 	openModal() {
 		const modal = this.container.querySelector("#createEventModal");
 		const modalContent = this.container.querySelector(".dashboard_modal_content");
-		
+
 		if (modal) {
 			modal.style.display = "flex";
 			this.isModalOpen = true;
-			
+
 			// Check if modal is showing success message, if so reset to form
 			const successMessage = modalContent?.querySelector(".dashboard_modal_success");
 			if (successMessage) {
 				this.resetModalContent();
 			}
-			
+
 			// Reset form fields
 			const form = this.container.querySelector("#createEventForm");
 			if (form) {
@@ -333,7 +334,7 @@ class Dashboard {
 						<button type="button" class="dashboard_error_button" id="retryButton">Retry</button>
 					</div>
 				`;
-				
+
 				const retryButton = this.container.querySelector("#retryButton");
 				if (retryButton) {
 					retryButton.addEventListener("click", () => {
@@ -401,19 +402,19 @@ class Dashboard {
 	 * Render a single event card
 	 */
 	renderEventCard(event) {
-		const eventDate = event.eventDate 
-			? new Date(event.eventDate).toLocaleDateString("en-US", { 
-				year: "numeric", 
-				month: "short", 
-				day: "numeric" 
+		const eventDate = event.eventDate
+			? new Date(event.eventDate).toLocaleDateString("en-US", {
+				year: "numeric",
+				month: "short",
+				day: "numeric"
 			})
 			: "No date set";
-		
-		const createdDate = event.createdAt 
-			? new Date(event.createdAt).toLocaleDateString("en-US", { 
-				year: "numeric", 
-				month: "short", 
-				day: "numeric" 
+
+		const createdDate = event.createdAt
+			? new Date(event.createdAt).toLocaleDateString("en-US", {
+				year: "numeric",
+				month: "short",
+				day: "numeric"
 			})
 			: "";
 
@@ -464,7 +465,7 @@ class Dashboard {
 			// Generate QR code URL
 			const response = await eventAPI.generateQrCode(eventId);
 			const event = response.event || response.data?.event || response;
-			
+
 			if (!event || !event.qrCodeUrl) {
 				throw new Error("Failed to generate QR code");
 			}
@@ -613,7 +614,6 @@ class Dashboard {
 	attachPhotoUploadListeners() {
 		const photoUploadButton = this.container.querySelector("#photoUploadButton");
 		const photoUploadInput = this.container.querySelector("#photoUploadInput");
-		const photoUploadPreview = this.container.querySelector("#photoUploadPreview");
 
 		if (photoUploadButton && photoUploadInput) {
 			// Enable button if event ID is available
@@ -621,10 +621,16 @@ class Dashboard {
 				photoUploadButton.disabled = false;
 			}
 
-			// Open file picker on button click
-			photoUploadButton.addEventListener("click", () => {
-				photoUploadInput.click();
-			});
+			// Single click handler for the button
+			photoUploadButton.onclick = () => {
+				if (this.selectedFiles.length > 0) {
+					// If files are already selected, trigger upload
+					this.handlePhotoUpload();
+				} else {
+					// Otherwise, open file picker
+					photoUploadInput.click();
+				}
+			};
 
 			// Handle file selection
 			photoUploadInput.addEventListener("change", (e) => {
@@ -678,22 +684,40 @@ class Dashboard {
 			return;
 		}
 
+		// Update state
+		this.selectedFiles = validFiles;
+
 		// Show preview
-		validFiles.forEach((file) => {
+		validFiles.forEach((file, index) => {
 			const reader = new FileReader();
 			reader.onload = (e) => {
 				const previewItem = document.createElement("div");
 				previewItem.className = "dashboard_photo_upload_preview_item";
 				previewItem.innerHTML = `
 					<img src="${e.target.result}" alt="${file.name}" />
+					<button type="button" class="dashboard_photo_upload_preview_remove" data-index="${index}" title="Remove photo">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<line x1="18" y1="6" x2="6" y2="18"></line>
+							<line x1="6" y1="6" x2="18" y2="18"></line>
+						</svg>
+					</button>
 					<span>${file.name}</span>
 				`;
 				preview.appendChild(previewItem);
+
+				// Attach remove listener
+				const removeBtn = previewItem.querySelector(".dashboard_photo_upload_preview_remove");
+				if (removeBtn) {
+					removeBtn.onclick = (event) => {
+						event.stopPropagation();
+						this.removeSelectedPhoto(index);
+					};
+				}
 			};
 			reader.readAsDataURL(file);
 		});
 
-		// Update upload button
+		// Update upload button text
 		uploadButton.innerHTML = `
 			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 				<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -702,14 +726,44 @@ class Dashboard {
 			</svg>
 			<span>Upload ${validFiles.length} Photo${validFiles.length > 1 ? "s" : ""}</span>
 		`;
-		uploadButton.onclick = () => this.handlePhotoUpload(validFiles);
 	}
 
 	/**
-	 * Handle photo upload
+	 * Remove a photo from the selection
+	 * @param {number} index - Index of the photo to remove
 	 */
-	async handlePhotoUpload(files) {
-		if (!this.currentEventId || this.isUploadingPhotos) {
+	removeSelectedPhoto(index) {
+		if (index < 0 || index >= this.selectedFiles.length) return;
+
+		// Remove file from array
+		this.selectedFiles.splice(index, 1);
+
+		// If no files left, reset the button and clear preview
+		if (this.selectedFiles.length === 0) {
+			const preview = this.container.querySelector("#photoUploadPreview");
+			const uploadButton = this.container.querySelector("#photoUploadButton");
+			const photoUploadInput = this.container.querySelector("#photoUploadInput");
+
+			if (preview) preview.innerHTML = "";
+			if (photoUploadInput) photoUploadInput.value = "";
+			if (uploadButton) {
+				uploadButton.innerHTML = `
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+						<polyline points="17 8 12 3 7 8"></polyline>
+						<line x1="12" y1="3" x2="12" y2="15"></line>
+					</svg>
+					<span>Select Photos</span>
+				`;
+			}
+		} else {
+			// Re-trigger selection logic with current files to refresh preview and count
+			this.handlePhotoSelection(this.selectedFiles);
+		}
+	}
+
+	async handlePhotoUpload() {
+		if (!this.currentEventId || this.isUploadingPhotos || this.selectedFiles.length === 0) {
 			return;
 		}
 
@@ -735,7 +789,7 @@ class Dashboard {
 		try {
 			const result = await photoAPI.uploadPhotos(
 				this.currentEventId,
-				files,
+				this.selectedFiles,
 				(progress) => {
 					if (progressFill) {
 						progressFill.style.width = `${progress}%`;
@@ -746,11 +800,14 @@ class Dashboard {
 				}
 			);
 
+			// Clear selected files after successful request
+			this.selectedFiles = [];
+
 			// Show success/error message
 			if (message) {
 				const successCount = result.successful || result.uploaded?.length || 0;
 				const failedCount = result.failed || result.errors?.length || 0;
-				
+
 				if (successCount > 0 && failedCount === 0) {
 					// All successful
 					let messageHTML = `<div class="dashboard_photo_upload_success">`;
@@ -766,9 +823,9 @@ class Dashboard {
 					} else {
 						messageHTML += `Upload failed:<br>`;
 					}
-					
+
 					if (result.errors && result.errors.length > 0) {
-						const errorDetails = result.errors.map(e => 
+						const errorDetails = result.errors.map(e =>
 							`${e.fileName}: ${e.error}`
 						).join("<br>");
 						messageHTML += errorDetails;
@@ -791,7 +848,7 @@ class Dashboard {
 				preview.innerHTML = "";
 			}
 
-			// Reset button
+			// Reset button UI
 			if (uploadButton) {
 				uploadButton.innerHTML = `
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -802,24 +859,21 @@ class Dashboard {
 					<span>Select Photos</span>
 				`;
 				uploadButton.disabled = false;
-				uploadButton.onclick = () => {
-					photoUploadInput?.click();
-				};
 			}
 		} catch (error) {
 			console.error("Failed to upload photos:", error);
 			console.error("Error details:", error.response?.data);
-			
+
 			let errorMessage = error.response?.data?.message || error.message || "Failed to upload photos. Please try again.";
-			
+
 			// Show detailed error if available
 			if (error.response?.data?.data?.errors && error.response.data.data.errors.length > 0) {
-				const errorDetails = error.response.data.data.errors.map(e => 
+				const errorDetails = error.response.data.data.errors.map(e =>
 					`${e.fileName}: ${e.error}`
 				).join("<br>");
 				errorMessage = `Upload failed:<br>${errorDetails}`;
 			}
-			
+
 			if (message) {
 				message.innerHTML = `<div class="dashboard_photo_upload_error">${errorMessage}</div>`;
 				message.style.display = "block";
@@ -846,8 +900,9 @@ class Dashboard {
 		if (modal) {
 			modal.style.display = "none";
 		}
-		// Reset current event ID
+		// Reset current event ID and selected files
 		this.currentEventId = null;
+		this.selectedFiles = [];
 		// Reset photo upload form
 		const photoUploadInput = this.container.querySelector("#photoUploadInput");
 		if (photoUploadInput) {
@@ -973,7 +1028,7 @@ class Dashboard {
 			this.showSuccessMessageInModal(newEvent);
 		} catch (error) {
 			console.error("Failed to create event:", error);
-			
+
 			// Reset button state
 			this.isSubmitting = false;
 			if (submitButton) {
@@ -985,7 +1040,7 @@ class Dashboard {
 
 			// Show error message
 			const errorMessage = error.response?.data?.message || error.message || "Failed to create event. Please try again.";
-			
+
 			if (error.response?.data?.message?.includes("Event name")) {
 				this.displayError("eventName", errorMessage);
 			} else {

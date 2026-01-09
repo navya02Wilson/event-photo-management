@@ -98,17 +98,17 @@ const cosineSimilarity = (vec1, vec2) => {
 	if (vec1.length !== vec2.length) {
 		return 0;
 	}
-	
+
 	let dotProduct = 0;
 	let norm1 = 0;
 	let norm2 = 0;
-	
+
 	for (let i = 0; i < vec1.length; i++) {
 		dotProduct += vec1[i] * vec2[i];
 		norm1 += vec1[i] * vec1[i];
 		norm2 += vec2[i] * vec2[i];
 	}
-	
+
 	const magnitude = Math.sqrt(norm1) * Math.sqrt(norm2);
 	return magnitude > 0 ? dotProduct / magnitude : 0;
 };
@@ -121,7 +121,8 @@ const cosineSimilarity = (vec1, vec2) => {
  * @param {number} threshold - Similarity threshold (0-1)
  * @returns {Promise<Object[]>} Array of similar face records with similarity scores
  */
-const findSimilarFaces = async (eventId, queryEmbedding, limit = 10, threshold = 0.7) => {
+const findSimilarFaces = async (eventId, queryEmbedding, limit = 10, threshold = 0.5) => {
+	console.log(`[PhotoRepository] Searching similar faces (threshold: ${threshold}, limit: ${limit})`);
 	// Get all embeddings for the event
 	const result = await query(
 		`SELECT 
@@ -138,17 +139,26 @@ const findSimilarFaces = async (eventId, queryEmbedding, limit = 10, threshold =
 	// Calculate similarity for each embedding
 	const similarities = result.rows.map(row => {
 		// Parse JSONB embedding back to array
-		const storedEmbedding = typeof row.embedding === 'string' 
-			? JSON.parse(row.embedding) 
+		const storedEmbedding = typeof row.embedding === 'string'
+			? JSON.parse(row.embedding)
 			: row.embedding;
-		
+
 		const similarity = cosineSimilarity(queryEmbedding, storedEmbedding);
-		
+
 		return {
 			...row,
 			similarity: similarity,
 		};
 	});
+
+	// Log all similarities above a very low threshold to help debugging
+	const debugSimilarities = similarities
+		.filter(item => item.similarity > 0.3)
+		.map(item => ({ fileName: item.file_name, score: item.similarity.toFixed(4) }));
+
+	if (debugSimilarities.length > 0) {
+		console.log(`[PhotoRepository] Potential matches found:`, JSON.stringify(debugSimilarities));
+	}
 
 	// Filter by threshold and sort by similarity
 	const filtered = similarities

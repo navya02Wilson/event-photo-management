@@ -32,7 +32,7 @@ MODEL_NAME = "buffalo_l"  # Best accuracy model
 # Models should be in: backend/models/buffalo_l/ (shared with Node.js backend)
 
 # Maximum image size (resize if larger)
-MAX_IMAGE_SIZE = 1920
+MAX_IMAGE_SIZE = 3000
 
 
 class FaceCountResponse(BaseModel):
@@ -85,7 +85,7 @@ def load_model():
             )
         
         # Prepare the model (loads it into memory)
-        face_app.prepare(ctx_id=-1, det_size=(640, 640))  # ctx_id=-1 means CPU
+        face_app.prepare(ctx_id=-1, det_size=(1280, 1280))  # Increased size for better group photo detection
         
         print(f"✅ InsightFace model '{MODEL_NAME}' loaded successfully")
         return True
@@ -213,6 +213,7 @@ async def extract_embedding(file: UploadFile = File(...)):
         
         # Detect faces and extract embeddings
         faces = face_app.get(img_rgb)
+        print(f"Detected {len(faces)} faces in image")
         
         if len(faces) == 0:
             # No faces detected - return empty list

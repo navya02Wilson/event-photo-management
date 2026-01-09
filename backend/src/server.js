@@ -17,7 +17,7 @@ const startServer = async () => {
 		// Test database connection
 		logger.info("Testing database connection...");
 		const dbConnected = await testConnection();
-		
+
 		if (!dbConnected) {
 			logger.warn("Database connection failed, skipping migrations...");
 			logger.warn("Server will start but database features may not work");
@@ -26,7 +26,7 @@ const startServer = async () => {
 			logger.info("Database connected, running migrations...");
 			try {
 				await runMigrations();
-				
+
 				// Run seeds after migrations
 				logger.info("Running database seeds...");
 				await runSeeds();
@@ -49,6 +49,7 @@ const startServer = async () => {
 			logger.info(`Server is running on port ${env.port}`);
 			logger.info(`Environment: ${env.nodeEnv}`);
 			logger.info(`Frontend URL: ${env.app.frontendUrl}`);
+			logger.info(`Python Service Timeout: ${env.pythonService.timeout}ms`);
 		});
 
 		// Handle server listen errors (e.g., port already in use)

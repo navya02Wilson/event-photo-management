@@ -45,11 +45,11 @@ class GoogleDriveAuth {
 		}
 
 		if (success === "true") {
-			console.log("OAuth successful, redirecting to create-event page", { email });
-			// Automatically redirect to create event page after successful verification
+			console.log("OAuth successful, redirecting to dashboard", { email });
+			// Automatically redirect to dashboard after successful verification
 			// Use setTimeout to ensure redirect happens after current execution context
 			setTimeout(() => {
-				window.location.href = "/create-event";
+				window.location.href = "/dashboard";
 			}, 0);
 			return true; // Indicate we're redirecting, don't render
 		}
@@ -80,7 +80,7 @@ class GoogleDriveAuth {
 		const continueButton = this.container.querySelector("#continueButton");
 		if (continueButton) {
 			continueButton.addEventListener("click", () => {
-				router.navigate("/create-event");
+				router.navigate("/dashboard");
 			});
 		}
 	}

@@ -1,6 +1,7 @@
 import Login from "../pages/Login/login.js";
 import GoogleDriveAuth from "../pages/GoogleDriveAuth/googledriveauth.js";
 import CreateEvent from "../pages/CreateEvent/createevent.js";
+import Dashboard from "../pages/Dashboard/dashboard.js";
 
 /**
  * Router class for handling page navigation
@@ -15,7 +16,7 @@ class Router {
 			"/forgot-password": null, // TODO: Add ForgotPassword component
 			"/google-drive-auth": GoogleDriveAuth,
 			"/create-event": CreateEvent,
-			"/dashboard": null, // TODO: Add Dashboard component
+			"/dashboard": Dashboard,
 		};
 		this.currentComponent = null;
 		this.container = null;

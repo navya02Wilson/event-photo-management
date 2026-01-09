@@ -1,6 +1,7 @@
 import { LoginFormFieldIds } from "../../utils/constants";
 import { getEmailError, getPasswordError } from "../../utils/validators.util";
 import router from "../../routes/router";
+import authAPI from "../../api/auth.api";
 import "./login.css";
 
 /**
@@ -123,6 +124,11 @@ class Login {
 		const facebookLogin = this.container.querySelector("#facebookLogin");
 		const twitterLogin = this.container.querySelector("#twitterLogin");
 
+		if (!form || !emailInput || !passwordInput) {
+			console.error("Required form elements not found");
+			return;
+		}
+
 		// Email input validation on blur
 		emailInput.addEventListener("blur", () => {
 			this.validateField(LoginFormFieldIds.EMAIL);
@@ -162,32 +168,42 @@ class Login {
 		});
 
 		// Register link click handler
-		registerLink.addEventListener("click", (e) => {
-			e.preventDefault();
-			router.navigate("/register");
-		});
+		if (registerLink) {
+			registerLink.addEventListener("click", (e) => {
+				e.preventDefault();
+				router.navigate("/register");
+			});
+		}
 
 		// Forgot password link click handler
-		forgotPasswordLink.addEventListener("click", (e) => {
-			e.preventDefault();
-			router.navigate("/forgot-password");
-		});
+		if (forgotPasswordLink) {
+			forgotPasswordLink.addEventListener("click", (e) => {
+				e.preventDefault();
+				router.navigate("/forgot-password");
+			});
+		}
 
 		// Password toggle visibility handler
-		passwordToggle.addEventListener("click", () => {
-			this.togglePasswordVisibility();
-		});
+		if (passwordToggle) {
+			passwordToggle.addEventListener("click", () => {
+				this.togglePasswordVisibility();
+			});
+		}
 
-		// Social login handlers
-		facebookLogin.addEventListener("click", () => {
-			console.log("Facebook login clicked");
-			// TODO: Implement Facebook login
-		});
+		// Social login handlers (if elements exist)
+		if (facebookLogin) {
+			facebookLogin.addEventListener("click", () => {
+				console.log("Facebook login clicked");
+				// TODO: Implement Facebook login
+			});
+		}
 
-		twitterLogin.addEventListener("click", () => {
-			console.log("Twitter login clicked");
-			// TODO: Implement Twitter login
-		});
+		if (twitterLogin) {
+			twitterLogin.addEventListener("click", () => {
+				console.log("Twitter login clicked");
+				// TODO: Implement Twitter login
+			});
+		}
 	}
 
 	/**
@@ -196,6 +212,11 @@ class Login {
 	togglePasswordVisibility() {
 		const passwordInput = this.container.querySelector(`#${LoginFormFieldIds.PASSWORD}`);
 		const passwordToggle = this.container.querySelector("#passwordToggle");
+		
+		if (!passwordInput || !passwordToggle) {
+			return;
+		}
+
 		const eyeOpen = passwordToggle.querySelector(".login_eye_open");
 		const eyeClosed = passwordToggle.querySelector(".login_eye_closed");
 
@@ -286,7 +307,7 @@ class Login {
 	 * Handles form submission
 	 * @param {Event} event - Form submit event
 	 */
-	handleSubmit(event) {
+	async handleSubmit(event) {
 		event.preventDefault();
 
 		if (this.isSubmitting) {
@@ -296,6 +317,11 @@ class Login {
 		// Update form state from inputs
 		const emailInput = this.container.querySelector(`#${LoginFormFieldIds.EMAIL}`);
 		const passwordInput = this.container.querySelector(`#${LoginFormFieldIds.PASSWORD}`);
+
+		if (!emailInput || !passwordInput) {
+			console.error("Form inputs not found");
+			return;
+		}
 
 		this.form[LoginFormFieldIds.EMAIL] = emailInput.value.trim();
 		this.form[LoginFormFieldIds.PASSWORD] = passwordInput.value;
@@ -317,15 +343,24 @@ class Login {
 			buttonText.textContent = "Signing In...";
 		}
 
-		// TODO: Call login API when backend is ready
-		// For now, just log the form data
-		console.log("Login form submitted:", {
-			email: this.form[LoginFormFieldIds.EMAIL],
-			password: "***",
-		});
+		// Call login API
+		try {
+			const credentials = {
+				email: this.form[LoginFormFieldIds.EMAIL],
+				password: this.form[LoginFormFieldIds.PASSWORD],
+			};
 
-		// Simulate API call delay (remove when backend is ready)
-		setTimeout(() => {
+			const response = await authAPI.login(credentials);
+
+			// Store tokens in localStorage
+			if (response.accessToken) {
+				localStorage.setItem("accessToken", response.accessToken);
+			}
+			if (response.refreshToken) {
+				localStorage.setItem("refreshToken", response.refreshToken);
+			}
+
+			// Reset submitting state
 			this.isSubmitting = false;
 			if (loginButton) {
 				loginButton.disabled = false;
@@ -333,11 +368,29 @@ class Login {
 			if (buttonText) {
 				buttonText.textContent = "Sign In";
 			}
-			// TODO: Handle successful login (redirect to Google Drive auth page)
-			// Redirect to Google Drive authorization page after login
+
+			// Redirect to Google Drive authorization page after successful login
 			router.navigate("/google-drive-auth");
-			// TODO: Handle login error (display error message)
-		}, 1000);
+		} catch (error) {
+			// Handle login error
+			this.isSubmitting = false;
+			if (loginButton) {
+				loginButton.disabled = false;
+			}
+			if (buttonText) {
+				buttonText.textContent = "Sign In";
+			}
+
+			// Display error message
+			const errorMessage =
+				error.response?.data?.message ||
+				error.message ||
+				"An error occurred during login. Please try again.";
+			
+			// Show error message (you can customize this to show in a specific error field or toast)
+			this.displayError(LoginFormFieldIds.EMAIL, "");
+			this.displayError(LoginFormFieldIds.PASSWORD, errorMessage);
+		}
 	}
 
 	cleanup() {

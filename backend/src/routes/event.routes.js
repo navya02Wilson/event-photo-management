@@ -31,3 +31,4 @@ router.get("/:id", authenticate, eventController.getEventById);
 
 module.exports = router;
 
+

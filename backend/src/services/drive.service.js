@@ -12,8 +12,20 @@ const ApiError = require("../utils/ApiError");
 /**
  * Create OAuth2 client
  * @returns {google.auth.OAuth2Client} OAuth2 client
+ * @throws {ApiError} If Google OAuth credentials are not configured
  */
 const createOAuth2Client = () => {
+	if (!env.google.clientId || !env.google.clientSecret) {
+		throw new ApiError(
+			500,
+			"Google OAuth credentials are not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in your .env file."
+		);
+	}
+
+	// Log the redirect URI being used (for debugging)
+	console.log("OAuth2 Client - Using redirect URI:", env.google.redirectUri);
+	console.log("OAuth2 Client - Client ID:", env.google.clientId);
+
 	return new google.auth.OAuth2(
 		env.google.clientId,
 		env.google.clientSecret,
@@ -25,6 +37,7 @@ const createOAuth2Client = () => {
  * Generate Google OAuth authorization URL
  * @param {number} userId - User ID
  * @returns {Promise<string>} Authorization URL
+ * @throws {ApiError} If OAuth client creation fails
  */
 const getAuthUrl = async (userId) => {
 	const oauth2Client = createOAuth2Client();

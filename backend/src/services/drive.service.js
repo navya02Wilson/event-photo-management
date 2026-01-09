@@ -295,10 +295,55 @@ const createFolder = async (userId, folderName) => {
 	}
 };
 
+/**
+ * Upload a file to Google Drive folder
+ * @param {number} userId - User ID
+ * @param {string} folderId - Google Drive folder ID
+ * @param {Buffer} fileBuffer - File buffer
+ * @param {string} fileName - File name
+ * @param {string} mimeType - File MIME type
+ * @returns {Promise<string>} File ID
+ * @throws {ApiError} If file upload fails
+ */
+const uploadFile = async (userId, folderId, fileBuffer, fileName, mimeType) => {
+	const oauth2Client = await getAuthenticatedClient(userId);
+	const drive = google.drive({ version: "v3", auth: oauth2Client });
+
+	try {
+		// Convert Buffer to stream for Google Drive API
+		const { Readable } = require("stream");
+		const stream = Readable.from(fileBuffer);
+
+		const response = await drive.files.create({
+			requestBody: {
+				name: fileName,
+				parents: [folderId],
+			},
+			media: {
+				mimeType: mimeType,
+				body: stream,
+			},
+			fields: "id, name",
+		});
+
+		if (!response.data.id) {
+			throw new ApiError(500, "Failed to upload file to Google Drive");
+		}
+
+		return response.data.id;
+	} catch (error) {
+		if (error instanceof ApiError) {
+			throw error;
+		}
+		throw new ApiError(500, `Failed to upload file to Google Drive: ${error.message}`);
+	}
+};
+
 module.exports = {
 	getAuthUrl,
 	exchangeCodeForTokens,
 	getAuthStatus,
 	createFolder,
+	uploadFile,
 };
 

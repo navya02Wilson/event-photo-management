@@ -1,5 +1,6 @@
 import router from "../../routes/router";
 import eventAPI from "../../api/event.api";
+import photoAPI from "../../api/photo.api";
 import QRCode from "qrcode";
 import "./dashboard.css";
 
@@ -14,6 +15,8 @@ class Dashboard {
 		this.isLoading = false;
 		this.isModalOpen = false;
 		this.isSubmitting = false;
+		this.currentEventId = null;
+		this.isUploadingPhotos = false;
 		this.init();
 	}
 
@@ -491,6 +494,9 @@ class Dashboard {
 			this.createQrCodeModal();
 		}
 
+		// Store current event ID for photo upload
+		this.currentEventId = event.id;
+
 		const modalElement = this.container.querySelector("#qrCodeModal");
 		const qrCodeImage = this.container.querySelector("#qrCodeImage");
 		const eventName = this.container.querySelector("#qrCodeEventName");
@@ -528,6 +534,9 @@ class Dashboard {
 				}
 			};
 		}
+
+		// Attach photo upload listeners
+		this.attachPhotoUploadListeners();
 	}
 
 	/**
@@ -538,7 +547,7 @@ class Dashboard {
 			<div class="dashboard_modal_overlay" id="qrCodeModal" style="display: none;">
 				<div class="dashboard_modal_container dashboard_qrcode_modal">
 					<div class="dashboard_modal_header">
-						<h2 class="dashboard_modal_title">Event QR Code</h2>
+						<h2 class="dashboard_modal_title">Event Details</h2>
 						<button type="button" class="dashboard_modal_close" id="closeQrCodeModal">
 							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 								<line x1="18" y1="6" x2="6" y2="18"></line>
@@ -558,6 +567,38 @@ class Dashboard {
 								<a id="qrCodeUrl" href="" target="_blank" class="dashboard_qrcode_url"></a>
 							</div>
 						</div>
+						<div class="dashboard_photo_upload_section">
+							<h4 class="dashboard_photo_upload_title">Upload Photos</h4>
+							<p class="dashboard_photo_upload_subtitle">Select multiple photos to upload to this event</p>
+							<input
+								type="file"
+								id="photoUploadInput"
+								accept="image/*"
+								multiple
+								style="display: none;"
+							/>
+							<button
+								type="button"
+								class="dashboard_photo_upload_button"
+								id="photoUploadButton"
+								disabled
+							>
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+									<polyline points="17 8 12 3 7 8"></polyline>
+									<line x1="12" y1="3" x2="12" y2="15"></line>
+								</svg>
+								<span>Select Photos</span>
+							</button>
+							<div id="photoUploadPreview" class="dashboard_photo_upload_preview"></div>
+							<div id="photoUploadProgress" class="dashboard_photo_upload_progress" style="display: none;">
+								<div class="dashboard_photo_upload_progress_bar">
+									<div class="dashboard_photo_upload_progress_fill" id="photoUploadProgressFill"></div>
+								</div>
+								<p class="dashboard_photo_upload_progress_text" id="photoUploadProgressText">Uploading...</p>
+							</div>
+							<div id="photoUploadMessage" class="dashboard_photo_upload_message"></div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -567,12 +608,259 @@ class Dashboard {
 	}
 
 	/**
+	 * Attach photo upload listeners
+	 */
+	attachPhotoUploadListeners() {
+		const photoUploadButton = this.container.querySelector("#photoUploadButton");
+		const photoUploadInput = this.container.querySelector("#photoUploadInput");
+		const photoUploadPreview = this.container.querySelector("#photoUploadPreview");
+
+		if (photoUploadButton && photoUploadInput) {
+			// Enable button if event ID is available
+			if (this.currentEventId) {
+				photoUploadButton.disabled = false;
+			}
+
+			// Open file picker on button click
+			photoUploadButton.addEventListener("click", () => {
+				photoUploadInput.click();
+			});
+
+			// Handle file selection
+			photoUploadInput.addEventListener("change", (e) => {
+				const files = Array.from(e.target.files);
+				if (files.length > 0) {
+					this.handlePhotoSelection(files);
+				}
+			});
+		}
+	}
+
+	/**
+	 * Handle photo selection and show preview
+	 */
+	handlePhotoSelection(files) {
+		const preview = this.container.querySelector("#photoUploadPreview");
+		const uploadButton = this.container.querySelector("#photoUploadButton");
+		const message = this.container.querySelector("#photoUploadMessage");
+
+		if (!preview || !uploadButton) return;
+
+		// Clear previous preview
+		preview.innerHTML = "";
+
+		// Validate files
+		const validFiles = [];
+		const errors = [];
+
+		files.forEach((file) => {
+			if (!file.type.startsWith("image/")) {
+				errors.push(`${file.name} is not an image file`);
+				return;
+			}
+			if (file.size > 10 * 1024 * 1024) {
+				errors.push(`${file.name} is too large (max 10MB)`);
+				return;
+			}
+			validFiles.push(file);
+		});
+
+		// Show errors if any
+		if (errors.length > 0 && message) {
+			message.innerHTML = `<div class="dashboard_photo_upload_error">${errors.join("<br>")}</div>`;
+			message.style.display = "block";
+		} else if (message) {
+			message.innerHTML = "";
+			message.style.display = "none";
+		}
+
+		if (validFiles.length === 0) {
+			return;
+		}
+
+		// Show preview
+		validFiles.forEach((file) => {
+			const reader = new FileReader();
+			reader.onload = (e) => {
+				const previewItem = document.createElement("div");
+				previewItem.className = "dashboard_photo_upload_preview_item";
+				previewItem.innerHTML = `
+					<img src="${e.target.result}" alt="${file.name}" />
+					<span>${file.name}</span>
+				`;
+				preview.appendChild(previewItem);
+			};
+			reader.readAsDataURL(file);
+		});
+
+		// Update upload button
+		uploadButton.innerHTML = `
+			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+				<polyline points="17 8 12 3 7 8"></polyline>
+				<line x1="12" y1="3" x2="12" y2="15"></line>
+			</svg>
+			<span>Upload ${validFiles.length} Photo${validFiles.length > 1 ? "s" : ""}</span>
+		`;
+		uploadButton.onclick = () => this.handlePhotoUpload(validFiles);
+	}
+
+	/**
+	 * Handle photo upload
+	 */
+	async handlePhotoUpload(files) {
+		if (!this.currentEventId || this.isUploadingPhotos) {
+			return;
+		}
+
+		this.isUploadingPhotos = true;
+		const uploadButton = this.container.querySelector("#photoUploadButton");
+		const progressContainer = this.container.querySelector("#photoUploadProgress");
+		const progressFill = this.container.querySelector("#photoUploadProgressFill");
+		const progressText = this.container.querySelector("#photoUploadProgressText");
+		const message = this.container.querySelector("#photoUploadMessage");
+
+		// Disable button and show progress
+		if (uploadButton) {
+			uploadButton.disabled = true;
+		}
+		if (progressContainer) {
+			progressContainer.style.display = "block";
+		}
+		if (message) {
+			message.innerHTML = "";
+			message.style.display = "none";
+		}
+
+		try {
+			const result = await photoAPI.uploadPhotos(
+				this.currentEventId,
+				files,
+				(progress) => {
+					if (progressFill) {
+						progressFill.style.width = `${progress}%`;
+					}
+					if (progressText) {
+						progressText.textContent = `Uploading... ${progress}%`;
+					}
+				}
+			);
+
+			// Show success/error message
+			if (message) {
+				const successCount = result.successful || result.uploaded?.length || 0;
+				const failedCount = result.failed || result.errors?.length || 0;
+				
+				if (successCount > 0 && failedCount === 0) {
+					// All successful
+					let messageHTML = `<div class="dashboard_photo_upload_success">`;
+					messageHTML += `Successfully uploaded ${successCount} photo${successCount !== 1 ? "s" : ""}`;
+					messageHTML += `</div>`;
+					message.innerHTML = messageHTML;
+					message.style.display = "block";
+				} else if (failedCount > 0) {
+					// Some or all failed - show detailed errors
+					let messageHTML = `<div class="dashboard_photo_upload_error">`;
+					if (successCount > 0) {
+						messageHTML += `Uploaded ${successCount} photo${successCount !== 1 ? "s" : ""}, ${failedCount} failed:<br>`;
+					} else {
+						messageHTML += `Upload failed:<br>`;
+					}
+					
+					if (result.errors && result.errors.length > 0) {
+						const errorDetails = result.errors.map(e => 
+							`${e.fileName}: ${e.error}`
+						).join("<br>");
+						messageHTML += errorDetails;
+					} else {
+						messageHTML += "Unknown error occurred";
+					}
+					messageHTML += `</div>`;
+					message.innerHTML = messageHTML;
+					message.style.display = "block";
+				}
+			}
+
+			// Reset form
+			const photoUploadInput = this.container.querySelector("#photoUploadInput");
+			if (photoUploadInput) {
+				photoUploadInput.value = "";
+			}
+			const preview = this.container.querySelector("#photoUploadPreview");
+			if (preview) {
+				preview.innerHTML = "";
+			}
+
+			// Reset button
+			if (uploadButton) {
+				uploadButton.innerHTML = `
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+						<polyline points="17 8 12 3 7 8"></polyline>
+						<line x1="12" y1="3" x2="12" y2="15"></line>
+					</svg>
+					<span>Select Photos</span>
+				`;
+				uploadButton.disabled = false;
+				uploadButton.onclick = () => {
+					photoUploadInput?.click();
+				};
+			}
+		} catch (error) {
+			console.error("Failed to upload photos:", error);
+			console.error("Error details:", error.response?.data);
+			
+			let errorMessage = error.response?.data?.message || error.message || "Failed to upload photos. Please try again.";
+			
+			// Show detailed error if available
+			if (error.response?.data?.data?.errors && error.response.data.data.errors.length > 0) {
+				const errorDetails = error.response.data.data.errors.map(e => 
+					`${e.fileName}: ${e.error}`
+				).join("<br>");
+				errorMessage = `Upload failed:<br>${errorDetails}`;
+			}
+			
+			if (message) {
+				message.innerHTML = `<div class="dashboard_photo_upload_error">${errorMessage}</div>`;
+				message.style.display = "block";
+			}
+		} finally {
+			this.isUploadingPhotos = false;
+			if (progressContainer) {
+				progressContainer.style.display = "none";
+			}
+			if (progressFill) {
+				progressFill.style.width = "0%";
+			}
+			if (uploadButton) {
+				uploadButton.disabled = false;
+			}
+		}
+	}
+
+	/**
 	 * Close QR code modal
 	 */
 	closeQrCodeModal() {
 		const modal = this.container.querySelector("#qrCodeModal");
 		if (modal) {
 			modal.style.display = "none";
+		}
+		// Reset current event ID
+		this.currentEventId = null;
+		// Reset photo upload form
+		const photoUploadInput = this.container.querySelector("#photoUploadInput");
+		if (photoUploadInput) {
+			photoUploadInput.value = "";
+		}
+		const preview = this.container.querySelector("#photoUploadPreview");
+		if (preview) {
+			preview.innerHTML = "";
+		}
+		const message = this.container.querySelector("#photoUploadMessage");
+		if (message) {
+			message.innerHTML = "";
+			message.style.display = "none";
 		}
 	}
 

@@ -4,15 +4,8 @@
 -- Version: 1.0.0
 -- ============================================================================
 
--- Enable pgvector extension for vector similarity search
--- Note: If pgvector is not installed, this command will fail
--- The migration runner will handle this error gracefully in development mode
--- To install pgvector on Windows:
---   1. Download from: https://github.com/pgvector/pgvector/releases
---   2. Extract and copy files to: C:\Program Files\PostgreSQL\17\share\extension\
---   3. Restart PostgreSQL service
---   4. Then run: CREATE EXTENSION vector;
-CREATE EXTENSION IF NOT EXISTS vector;
+-- Note: This migration uses JSONB for storing embeddings instead of pgvector
+-- No extension installation required
 
 -- ============================================================================
 -- USERS TABLE (Event Management Teams & Admins)
@@ -122,7 +115,7 @@ CREATE TABLE IF NOT EXISTS event_images (
 
 -- ============================================================================
 -- FACE_EMBEDDINGS TABLE (Vector Store)
--- Requires pgvector extension
+-- Uses JSONB to store embedding vectors (no pgvector required)
 -- Filter search by event_id
 -- Supports face similarity search
 -- ============================================================================
@@ -130,17 +123,15 @@ CREATE TABLE IF NOT EXISTS face_embeddings (
 	id SERIAL NOT NULL PRIMARY KEY,
 	event_id BIGINT REFERENCES events(id),
 	event_image_id BIGINT REFERENCES event_images(id),
-	embedding VECTOR(512),
+	embedding JSONB NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create index on event_id for faster filtering
 CREATE INDEX IF NOT EXISTS idx_face_embeddings_event_id ON face_embeddings(event_id);
 
--- Create vector index for similarity search (using ivfflat index)
--- Note: This index should be created after some data is inserted for better performance
--- CREATE INDEX IF NOT EXISTS idx_face_embeddings_vector ON face_embeddings 
--- USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+-- Create GIN index on embedding JSONB for faster queries
+CREATE INDEX IF NOT EXISTS idx_face_embeddings_embedding ON face_embeddings USING GIN (embedding);
 
 -- ============================================================================
 -- GUEST_SELFIES TABLE (PoC / Debug / Analytics)
@@ -148,13 +139,16 @@ CREATE INDEX IF NOT EXISTS idx_face_embeddings_event_id ON face_embeddings(event
 CREATE TABLE IF NOT EXISTS guest_selfies (
 	id SERIAL NOT NULL PRIMARY KEY,
 	event_id BIGINT REFERENCES events(id),
-	embedding VECTOR(512),
+	embedding JSONB NOT NULL,
 	matched BOOLEAN DEFAULT FALSE,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create index on event_id for faster filtering
 CREATE INDEX IF NOT EXISTS idx_guest_selfies_event_id ON guest_selfies(event_id);
+
+-- Create GIN index on embedding JSONB for faster queries
+CREATE INDEX IF NOT EXISTS idx_guest_selfies_embedding ON guest_selfies USING GIN (embedding);
 
 -- ============================================================================
 -- Additional Indexes for Performance

@@ -10,7 +10,8 @@ const env = require("../config/env");
 
 // Python service configuration
 const PYTHON_SERVICE_URL = env.pythonService?.url || process.env.PYTHON_SERVICE_URL || "http://127.0.0.1:8000";
-const REQUEST_TIMEOUT = env.pythonService?.timeout || 30000; // 30 seconds
+const REQUEST_TIMEOUT = 300000; // Hardcoded 5 minutes to override any .env issues
+console.log(`[PythonFaceService] Using request timeout: ${REQUEST_TIMEOUT}ms`);
 
 // Create axios instance with timeout
 const pythonServiceClient = axios.create({
@@ -46,11 +47,11 @@ const validateFaceCount = async (imageBuffer, mimeType) => {
 	try {
 		// Create form data
 		const formData = new FormData();
-		
+
 		// Determine file extension from MIME type
 		const ext = mimeType.split("/")[1] || "jpg";
 		const filename = `image.${ext}`;
-		
+
 		formData.append("file", imageBuffer, {
 			filename: filename,
 			contentType: mimeType,
@@ -67,7 +68,7 @@ const validateFaceCount = async (imageBuffer, mimeType) => {
 			// Python service returned an error
 			const status = error.response.status;
 			const detail = error.response.data?.detail || error.response.data?.error || error.message;
-			
+
 			if (status === 400) {
 				throw new ApiError(400, `Invalid image: ${detail}`);
 			} else if (status === 503) {
@@ -96,11 +97,11 @@ const extractFaceEmbeddingsFromBuffer = async (imageBuffer, mimeType) => {
 	try {
 		// Create form data
 		const formData = new FormData();
-		
+
 		// Determine file extension from MIME type
 		const ext = mimeType.split("/")[1] || "jpg";
 		const filename = `image.${ext}`;
-		
+
 		formData.append("file", imageBuffer, {
 			filename: filename,
 			contentType: mimeType,
@@ -111,14 +112,17 @@ const extractFaceEmbeddingsFromBuffer = async (imageBuffer, mimeType) => {
 			headers: formData.getHeaders(),
 		});
 
+		const embeddings = response.data.embeddings || [];
+		console.log(`[PythonFaceService] Extracted ${embeddings.length} face embeddings from image`);
+
 		// Return embeddings array
-		return response.data.embeddings || [];
+		return embeddings;
 	} catch (error) {
 		if (error.response) {
 			// Python service returned an error
 			const status = error.response.status;
 			const detail = error.response.data?.detail || error.response.data?.error || error.message;
-			
+
 			if (status === 400) {
 				throw new ApiError(400, `Invalid image: ${detail}`);
 			} else if (status === 503) {
@@ -145,7 +149,7 @@ const extractFaceEmbeddingsFromBuffer = async (imageBuffer, mimeType) => {
 const extractFaceEmbeddings = async (imagePath) => {
 	const fs = require("fs");
 	const path = require("path");
-	
+
 	try {
 		// Check if file exists
 		if (!fs.existsSync(imagePath)) {
@@ -154,7 +158,7 @@ const extractFaceEmbeddings = async (imagePath) => {
 
 		// Read image file
 		const imageBuffer = fs.readFileSync(imagePath);
-		
+
 		// Determine MIME type from file extension
 		const ext = path.extname(imagePath).toLowerCase();
 		const mimeTypes = {

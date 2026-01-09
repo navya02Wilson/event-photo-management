@@ -14,13 +14,19 @@ class GoogleDriveAuth {
 	}
 
 	init() {
-		this.checkCallback();
-		this.render();
-		this.attachEventListeners();
+		// Check callback first - if successful, redirect immediately without rendering
+		const shouldRedirect = this.checkCallback();
+		
+		// Only render if we're not redirecting
+		if (!shouldRedirect) {
+			this.render();
+			this.attachEventListeners();
+		}
 	}
 
 	/**
 	 * Check if this is a callback from Google OAuth
+	 * @returns {boolean} True if redirecting, false otherwise
 	 */
 	checkCallback() {
 		const urlParams = new URLSearchParams(window.location.search);
@@ -28,20 +34,27 @@ class GoogleDriveAuth {
 		const error = urlParams.get("error");
 		const email = urlParams.get("email");
 
+		console.log("OAuth Callback Check:", { success, error, email, fullUrl: window.location.href });
+
 		if (error) {
 			// Show error message
 			alert(`Authorization failed: ${error}`);
 			// Clean URL
 			window.history.replaceState({}, "", "/google-drive-auth");
-			return;
+			return false; // Don't redirect, render the page
 		}
 
-		if (success === "true" && email) {
-			// Show success message and redirect to dashboard
-			this.showSuccessMessage(email);
-			// Clean URL
-			window.history.replaceState({}, "", "/google-drive-auth");
+		if (success === "true") {
+			console.log("OAuth successful, redirecting to create-event page", { email });
+			// Automatically redirect to create event page after successful verification
+			// Use setTimeout to ensure redirect happens after current execution context
+			setTimeout(() => {
+				window.location.href = "/create-event";
+			}, 0);
+			return true; // Indicate we're redirecting, don't render
 		}
+
+		return false; // No callback, render normally
 	}
 
 	/**

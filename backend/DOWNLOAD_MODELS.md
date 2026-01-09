@@ -131,3 +131,4 @@ node test-face-recognition.js
 3. ✅ Test photo upload through frontend
 4. ✅ Verify embeddings in database
 
+

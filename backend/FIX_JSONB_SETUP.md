@@ -106,3 +106,4 @@ The `embedding` column should show a JSON array like `[0.123, -0.456, ...]`.
 - Similarity search is done in JavaScript (slightly slower than pgvector, but works fine for most use cases)
 - No extension installation needed!
 
+

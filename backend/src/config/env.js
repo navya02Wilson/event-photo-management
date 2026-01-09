@@ -58,6 +58,12 @@ const env = {
 		frontendUrl: process.env.FRONTEND_URL || "http://localhost:5173",
 		backendUrl: process.env.BACKEND_URL || "http://localhost:3000",
 	},
+	
+	// Python Face Recognition Service configuration
+	pythonService: {
+		url: process.env.PYTHON_SERVICE_URL || "http://127.0.0.1:8000",
+		timeout: parseInt(process.env.PYTHON_SERVICE_TIMEOUT || "30000", 10),
+	},
 };
 
 module.exports = env;

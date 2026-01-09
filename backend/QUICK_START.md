@@ -177,3 +177,4 @@ Your face recognition system is ready to use!
 - Optimize performance if needed
 - Consider using `buffalo_s` for faster processing
 
+

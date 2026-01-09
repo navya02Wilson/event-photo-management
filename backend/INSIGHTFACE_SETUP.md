@@ -143,3 +143,4 @@ console.log(`Embedding dimensions: ${embeddings[0].length}`);
 - ONNX Runtime Node.js: https://www.npmjs.com/package/onnxruntime-node
 - InsightFace Model Zoo: https://github.com/deepinsight/insightface#model-zoo
 
+

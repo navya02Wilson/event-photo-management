@@ -10,7 +10,7 @@ const os = require("os");
 const eventRepository = require("../repositories/event.repository");
 const photoRepository = require("../repositories/photo.repository");
 const driveService = require("./drive.service");
-const faceService = require("./face.service");
+const pythonFaceService = require("./python-face.service");
 const ApiError = require("../utils/ApiError");
 
 /**
@@ -105,8 +105,8 @@ const uploadPhotos = async (eventId, userId, files) => {
 				mimeType
 			);
 
-			// Extract face embeddings
-			const embeddings = await faceService.extractFaceEmbeddingsFromBuffer(
+			// Extract face embeddings using Python service
+			const embeddings = await pythonFaceService.extractFaceEmbeddingsFromBuffer(
 				fileBuffer,
 				mimeType
 			);

@@ -48,3 +48,4 @@ const photoAPI = {
 
 export default photoAPI;
 
+

@@ -10,6 +10,8 @@ const authRoutes = require("./auth.routes");
 const driveRoutes = require("./drive.routes");
 const eventRoutes = require("./event.routes");
 const eventController = require("../controllers/event.controller");
+const photoController = require("../controllers/photo.controller");
+const photoService = require("../services/photo.service");
 
 /**
  * Health check endpoint
@@ -45,6 +47,24 @@ router.use("/events", eventRoutes);
  * @access  Public
  */
 router.get("/public/events/:id", eventController.getPublicEventById);
+
+/**
+ * @route   POST /api/public/events/:id/search-face
+ * @desc    Search for photos in an event by face
+ * @access  Public
+ */
+router.post(
+	"/public/events/:id/search-face",
+	photoService.getSingleUploadMiddleware("photo"),
+	photoController.searchSimilarFaces
+);
+
+/**
+ * @route   GET /api/public/photos/:eventId/:fileId
+ * @desc    Get photo content
+ * @access  Public
+ */
+router.get("/public/photos/:eventId/:fileId", photoController.getPhoto);
 
 module.exports = router;
 

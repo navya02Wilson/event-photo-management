@@ -1,4 +1,5 @@
 import eventAPI from "../../api/event.api";
+import photoAPI from "../../api/photo.api";
 import "./publicevent.css";
 
 /**
@@ -12,6 +13,9 @@ class PublicEvent {
 		this.event = null;
 		this.isLoading = true;
 		this.eventId = null;
+		this.isSearching = false;
+		this.searchResults = [];
+		this.searchError = null;
 		this.init();
 	}
 
@@ -19,7 +23,7 @@ class PublicEvent {
 		// Extract event ID from URL path
 		const path = window.location.pathname;
 		const match = path.match(/\/public\/event\/(\d+)/);
-		
+
 		if (match && match[1]) {
 			this.eventId = parseInt(match[1], 10);
 			this.render();
@@ -46,11 +50,11 @@ class PublicEvent {
 			return;
 		}
 
-		const eventDate = this.event.eventDate 
-			? new Date(this.event.eventDate).toLocaleDateString("en-US", { 
-				year: "numeric", 
-				month: "long", 
-				day: "numeric" 
+		const eventDate = this.event.eventDate
+			? new Date(this.event.eventDate).toLocaleDateString("en-US", {
+				year: "numeric",
+				month: "long",
+				day: "numeric"
 			})
 			: "No date set";
 
@@ -85,9 +89,93 @@ class PublicEvent {
 							</div>
 						</div>
 					</div>
+
+					<div class="public_event_search_section">
+						<h3 class="public_event_search_title">Find Your Photos</h3>
+						<p class="public_event_search_subtitle">Upload a selfie to find photos of yourself in this event</p>
+						
+						<div class="public_event_upload_area" id="searchUploadArea">
+							<input type="file" id="searchFileInput" accept="image/*" style="display: none;" />
+							<button class="public_event_upload_button" id="searchButton">
+								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+									<polyline points="17 8 12 3 7 8"></polyline>
+									<line x1="12" y1="3" x2="12" y2="15"></line>
+								</svg>
+								<span>Upload Photo to Search</span>
+							</button>
+						</div>
+
+						${this.isSearching ? `
+							<div class="public_event_searching">
+								<div class="public_event_loading_spinner small"></div>
+								<p>Searching for your photos...</p>
+							</div>
+						` : ""}
+
+						${this.searchError ? `
+							<div class="public_event_search_error">
+								<p>${this.escapeHtml(this.searchError)}</p>
+							</div>
+						` : ""}
+
+						${this.searchResults.length > 0 ? `
+							<div class="public_event_results">
+								<h4 class="public_event_results_title">Found ${this.searchResults.length} matching photo(s)</h4>
+								<div class="public_event_results_grid">
+									${this.searchResults.map(match => `
+										<div class="public_event_photo_card">
+											<img src="/api/public/photos/${this.eventId}/${match.storage_file_id}" alt="Matched photo" class="public_event_photo" />
+											<div class="public_event_photo_overlay">
+												<a href="/api/public/photos/${this.eventId}/${match.storage_file_id}" target="_blank" class="public_event_view_link">View Original</a>
+											</div>
+										</div>
+									`).join("")}
+								</div>
+							</div>
+						` : (this.searchResults.length === 0 && !this.isSearching && this.searchError === null && this.hasSearched ? `
+							<div class="public_event_no_results">
+								<p>No matches found. Try a different photo!</p>
+							</div>
+						` : "")}
+					</div>
 				</div>
 			</div>
 		`;
+
+		this.attachEventListeners();
+	}
+
+	attachEventListeners() {
+		const searchButton = this.container.querySelector("#searchButton");
+		const searchFileInput = this.container.querySelector("#searchFileInput");
+
+		if (searchButton && searchFileInput) {
+			searchButton.addEventListener("click", () => searchFileInput.click());
+			searchFileInput.addEventListener("change", (e) => this.handleSearch(e));
+		}
+	}
+
+	async handleSearch(e) {
+		const file = e.target.files[0];
+		if (!file) return;
+
+		this.isSearching = true;
+		this.searchError = null;
+		this.searchResults = [];
+		this.hasSearched = true;
+		this.render();
+
+		try {
+			const result = await photoAPI.searchFace(this.eventId, file);
+			this.searchResults = result.matches || [];
+		} catch (error) {
+			console.error("Search failed:", error);
+			this.searchError = error.response?.data?.message || error.message || "Search failed. Please try again.";
+		} finally {
+			this.isSearching = false;
+			this.render();
+		}
 	}
 
 	renderError(message) {

@@ -56,7 +56,59 @@ const uploadPhotos = asyncHandler(async (req, res) => {
 	}
 });
 
+/**
+ * Search for similar faces in an event
+ * POST /api/public/events/:id/search-face
+ */
+const searchSimilarFaces = asyncHandler(async (req, res) => {
+	const eventId = parseInt(req.params.id, 10);
+	const file = req.file;
+
+	if (isNaN(eventId)) {
+		return res.status(400).json({
+			success: false,
+			message: "Invalid event ID",
+		});
+	}
+
+	if (!file) {
+		return res.status(400).json({
+			success: false,
+			message: "Search photo is required",
+		});
+	}
+
+	const matches = await photoService.searchSimilarFaces(eventId, file);
+
+	res.status(200).json(
+		new ApiResponse(200, { matches }, `Found ${matches.length} matching photo(s)`)
+	);
+});
+
+/**
+ * Get photo stream
+ * GET /api/public/photos/:eventId/:fileId
+ */
+const getPhoto = asyncHandler(async (req, res) => {
+	const eventId = parseInt(req.params.eventId, 10);
+	const fileId = req.params.fileId;
+
+	if (isNaN(eventId) || !fileId) {
+		return res.status(400).json({
+			success: false,
+			message: "Invalid event ID or file ID",
+		});
+	}
+
+	const { data, mimeType } = await photoService.getPhoto(eventId, fileId);
+
+	res.setHeader("Content-Type", mimeType);
+	data.pipe(res);
+});
+
 module.exports = {
 	uploadPhotos,
+	searchSimilarFaces,
+	getPhoto,
 };
 

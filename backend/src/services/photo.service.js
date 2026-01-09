@@ -60,6 +60,13 @@ const getUploadMiddleware = () => {
 };
 
 /**
+ * Get multer single upload middleware
+ */
+const getSingleUploadMiddleware = (fieldName = "photo") => {
+	return upload.single(fieldName);
+};
+
+/**
  * Upload and process photos for an event
  * @param {number} eventId - Event ID
  * @param {number} userId - User ID (for authorization check)
@@ -165,8 +172,74 @@ const uploadPhotos = async (eventId, userId, files) => {
 	};
 };
 
+/**
+ * Search for similar faces in an event
+ * @param {number} eventId - Event ID
+ * @param {Object} file - Uploaded search image file
+ * @returns {Promise<Object[]>} Matching photos
+ */
+const searchSimilarFaces = async (eventId, file) => {
+	if (!file) {
+		throw new ApiError(400, "Search photo is required");
+	}
+
+	// Verify event exists
+	const event = await eventRepository.findById(eventId);
+	if (!event) {
+		throw new ApiError(404, "Event not found");
+	}
+
+	// Read file buffer
+	const fileBuffer = fs.readFileSync(file.path);
+	const mimeType = file.mimetype;
+
+	// Extract face embedding using Python service
+	const embeddings = await pythonFaceService.extractFaceEmbeddingsFromBuffer(
+		fileBuffer,
+		mimeType
+	);
+
+	// Clean up temporary search file
+	if (fs.existsSync(file.path)) {
+		fs.unlinkSync(file.path);
+	}
+
+	if (embeddings.length === 0) {
+		throw new ApiError(400, "No face detected in the search photo");
+	}
+
+	// Use the first face detected for search
+	const queryEmbedding = embeddings[0];
+
+	// Find similar faces
+	const matches = await photoRepository.findSimilarFaces(eventId, queryEmbedding);
+
+	return matches;
+};
+
+/**
+ * Get photo stream from Google Drive
+ * @param {number} eventId - Event ID
+ * @param {string} storageFileId - Google Drive file ID
+ * @returns {Promise<Object>} Stream and mimeType
+ */
+const getPhoto = async (eventId, storageFileId) => {
+	const event = await eventRepository.findById(eventId);
+	if (!event) {
+		throw new ApiError(404, "Event not found");
+	}
+
+	// Get owner of the event to get credentials
+	const userId = event.userId;
+
+	return await driveService.getFileStream(userId, storageFileId);
+};
+
 module.exports = {
 	getUploadMiddleware,
+	getSingleUploadMiddleware,
 	uploadPhotos,
+	searchSimilarFaces,
+	getPhoto,
 };
 

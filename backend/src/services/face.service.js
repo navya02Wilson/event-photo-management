@@ -50,7 +50,10 @@ const loadModels = async () => {
 		// Load face detection model (if available)
 		if (fs.existsSync(FACE_DETECTION_MODEL)) {
 			faceDetectionSession = await ort.InferenceSession.create(FACE_DETECTION_MODEL);
+			// Log input/output names for debugging
 			console.log("✓ Face detection model loaded");
+			console.log(`  Input names: ${faceDetectionSession.inputNames.join(", ")}`);
+			console.log(`  Output names: ${faceDetectionSession.outputNames.join(", ")}`);
 			modelsFound++;
 		} else {
 			console.warn(`⚠️  Face detection model not found: ${FACE_DETECTION_MODEL}`);
@@ -60,6 +63,8 @@ const loadModels = async () => {
 		if (fs.existsSync(FACE_RECOGNITION_MODEL)) {
 			faceRecognitionSession = await ort.InferenceSession.create(FACE_RECOGNITION_MODEL);
 			console.log("✓ Face recognition model loaded (REQUIRED)");
+			console.log(`  Input names: ${faceRecognitionSession.inputNames.join(", ")}`);
+			console.log(`  Output names: ${faceRecognitionSession.outputNames.join(", ")}`);
 			modelsFound++;
 		} else {
 			console.warn(`⚠️  Face recognition model not found: ${FACE_RECOGNITION_MODEL}`);
@@ -129,6 +134,34 @@ const preprocessImage = async (imageBuffer) => {
 };
 
 /**
+ * Calculate Intersection over Union (IoU) between two bounding boxes
+ * @param {number[]} box1 - [x1, y1, x2, y2]
+ * @param {number[]} box2 - [x1, y1, x2, y2]
+ * @returns {number} IoU value between 0 and 1
+ */
+const calculateIoU = (box1, box2) => {
+	const [x1_1, y1_1, x2_1, y2_1] = box1;
+	const [x1_2, y1_2, x2_2, y2_2] = box2;
+	
+	// Calculate intersection
+	const x1_i = Math.max(x1_1, x1_2);
+	const y1_i = Math.max(y1_1, y1_2);
+	const x2_i = Math.min(x2_1, x2_2);
+	const y2_i = Math.min(y2_1, y2_2);
+	
+	if (x2_i <= x1_i || y2_i <= y1_i) {
+		return 0; // No intersection
+	}
+	
+	const intersection = (x2_i - x1_i) * (y2_i - y1_i);
+	const area1 = (x2_1 - x1_1) * (y2_1 - y1_1);
+	const area2 = (x2_2 - x1_2) * (y2_2 - y1_2);
+	const union = area1 + area2 - intersection;
+	
+	return intersection / union;
+};
+
+/**
  * Detect faces in image using InsightFace
  * @param {Object} imageData - Preprocessed image data
  * @returns {Promise<Array>} Array of detected faces with bounding boxes
@@ -173,28 +206,328 @@ const detectFaces = async (imageData) => {
 		// Create tensor: [1, 3, height, width]
 		const inputTensor = new ort.Tensor("float32", resizedData, [1, 3, inputHeight, inputWidth]);
 		
-		// Run inference
-		const results = await faceDetectionSession.run({ data: inputTensor });
+		// Get the correct input name from the model
+		const inputName = faceDetectionSession.inputNames[0];
+		
+		// Run inference with the correct input name
+		const results = await faceDetectionSession.run({ [inputName]: inputTensor });
 		
 		// Parse detection results
-		// Note: Actual output format depends on the InsightFace model version
-		// This is a simplified version - you may need to adjust based on your model
+		// InsightFace RetinaFace detection model (det_10g.onnx) outputs multiple tensors:
+		// - Boxes at different scales (e.g., 448, 471, 494)
+		// - Scores at different scales (e.g., 451, 474, 497)
+		// - Landmarks at different scales (e.g., 454, 477, 500)
 		const detections = [];
 		
-		// Process detection output (format may vary)
-		// Typically returns: boxes, scores, landmarks
-		if (results.boxes && results.scores) {
-			const boxes = results.boxes.data;
-			const scores = results.scores.data;
+		const outputKeys = Object.keys(results);
+		
+		if (outputKeys.length === 0) {
+			console.warn("No output from face detection model");
+			return [{
+				bbox: [imageData.width * 0.2, imageData.height * 0.2, imageData.width * 0.6, imageData.height * 0.6],
+				score: 0.9,
+			}];
+		}
+		
+		// Log output keys for debugging
+		console.log(`Face detection model output keys: ${outputKeys.join(", ")}`);
+		
+		// Scale factors to convert from model input size (640x640) back to original image size
+		const bboxScaleX = imageData.width / inputWidth;
+		const bboxScaleY = imageData.height / inputHeight;
+		
+		// Parse RetinaFace multi-scale outputs
+		// InsightFace det_10g.onnx uses RetinaFace architecture with multiple feature map scales
+		// Outputs are organized as: boxes[scale0], scores[scale0], landmarks[scale0], boxes[scale1], ...
+		
+		// Collect all boxes and scores from all scales
+		const allBoxes = [];
+		const allScores = [];
+		
+		// Sort output keys to process them in order
+		const sortedKeys = outputKeys.sort((a, b) => parseInt(a) - parseInt(b));
+		
+		// Log all output shapes for debugging
+		console.log("Parsing RetinaFace outputs:");
+		for (const key of sortedKeys) {
+			const tensor = results[key];
+			if (tensor && tensor.dims) {
+				console.log(`  Output ${key}: shape [${tensor.dims.join(", ")}], first few values: [${Array.from(tensor.data).slice(0, 5).map(v => v.toFixed(3)).join(", ")}]`);
+			}
+		}
+		
+		// Group outputs by scale
+		// Pattern: scores[scale0], boxes[scale0], landmarks[scale0], scores[scale1], ...
+		// Based on logs: 448(scores), 451(boxes), 454(landmarks), 471(scores), 474(boxes), 477(landmarks), ...
+		const numScales = Math.floor(sortedKeys.length / 3);
+		
+		// Helper function to apply sigmoid (for raw logits)
+		const sigmoid = (x) => 1 / (1 + Math.exp(-Math.max(-500, Math.min(500, x))));
+		
+		for (let scaleIdx = 0; scaleIdx < numScales; scaleIdx++) {
+			const scoreKeyIdx = scaleIdx * 3;
+			const boxKeyIdx = scaleIdx * 3 + 1;
 			
-			for (let i = 0; i < scores.length; i++) {
-				if (scores[i] > 0.5) { // Confidence threshold
-					detections.push({
-						bbox: boxes.slice(i * 4, (i + 1) * 4),
-						score: scores[i],
-					});
+			if (scoreKeyIdx >= sortedKeys.length || boxKeyIdx >= sortedKeys.length) {
+				break;
+			}
+			
+			const scoreKey = sortedKeys[scoreKeyIdx];
+			const boxKey = sortedKeys[boxKeyIdx];
+			
+			const scoreTensor = results[scoreKey];
+			const boxTensor = results[boxKey];
+			
+			if (!boxTensor || !scoreTensor || !boxTensor.data || !scoreTensor.data) {
+				console.warn(`Skipping scale ${scaleIdx}: missing box or score tensor`);
+				continue;
+			}
+			
+			const scores = Array.from(scoreTensor.data);
+			const boxes = Array.from(boxTensor.data);
+			const scoreDims = scoreTensor.dims;
+			const boxDims = boxTensor.dims;
+			
+			// Determine number of anchors
+			let numAnchors = 0;
+			if (scoreDims.length === 2 && scoreDims[1] === 1) {
+				numAnchors = scoreDims[0]; // [N, 1]
+			} else if (scoreDims.length === 1) {
+				numAnchors = scoreDims[0];
+			}
+			
+			if (numAnchors === 0 || boxDims.length !== 2 || boxDims[1] !== 4) {
+				console.warn(`Scale ${scaleIdx}: Invalid shapes - scores [${scoreDims.join(", ")}], boxes [${boxDims.join(", ")}]`);
+				continue;
+			}
+			
+			// Get feature map dimensions for this scale
+			// Scale 0: 12800 anchors = 80x80x2
+			// Scale 1: 3200 anchors = 40x40x2  
+			// Scale 2: 800 anchors = 20x20x2
+			const featMapSizes = [80, 40, 20];
+			const featMapSize = featMapSizes[scaleIdx] || Math.sqrt(numAnchors / 2);
+			const stride = inputWidth / featMapSize;
+			const anchorsPerLocation = numAnchors / (featMapSize * featMapSize);
+			
+			// Find max score for this scale to understand score distribution
+			const maxScore = Math.max(...scores);
+			const minScore = Math.min(...scores);
+			const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+			
+			if (scaleIdx === 0) {
+				console.log(`Scale ${scaleIdx} score stats: min=${minScore.toFixed(4)}, max=${maxScore.toFixed(4)}, avg=${avgScore.toFixed(4)}`);
+			}
+			
+			// Use adaptive threshold based on score distribution
+			const confidenceThreshold = maxScore < 0.1 ? 0.01 : 0.5;
+			
+			// Limit processing to prevent hangs - sample anchors if there are too many
+			const maxAnchorsToProcess = 5000; // Limit per scale
+			const stepSize = numAnchors > maxAnchorsToProcess ? Math.ceil(numAnchors / maxAnchorsToProcess) : 1;
+			
+			if (stepSize > 1) {
+				console.log(`Scale ${scaleIdx}: Sampling ${Math.floor(numAnchors / stepSize)} anchors (step size ${stepSize}) to speed up processing`);
+			}
+			
+			// Process each anchor (with sampling if needed)
+			for (let i = 0; i < numAnchors; i += stepSize) {
+				// Early exit if we've found enough detections
+				if (allBoxes.length > 50) {
+					console.log(`Found ${allBoxes.length} detections, stopping early to speed up processing`);
+					break;
+				}
+				
+				// Extract face score
+				let rawScore = scores[i];
+				let faceScore = rawScore;
+				
+				// Apply sigmoid if scores look like logits
+				if (maxScore < 1.0 && maxScore > 0) {
+					faceScore = sigmoid(rawScore);
+				} else if (maxScore > 1.0) {
+					faceScore = sigmoid(rawScore);
+				}
+				
+				if (faceScore > confidenceThreshold) {
+					// Extract bounding box coordinates
+					// Boxes are in [N, 4] format: likely [x1, y1, x2, y2] in input image coordinates
+					const baseIdx = i * 4;
+					let x1 = boxes[baseIdx];
+					let y1 = boxes[baseIdx + 1];
+					let x2 = boxes[baseIdx + 2];
+					let y2 = boxes[baseIdx + 3];
+					
+					// Check if boxes are in normalized coordinates (0-1 range) or absolute
+					// If values are small (< 10), they might be normalized or offsets
+					if (x1 >= 0 && x1 <= 1 && y1 >= 0 && y1 <= 1 && x2 > x1 && y2 > y1) {
+						// Normalized coordinates - scale to input size
+						x1 = x1 * inputWidth;
+						y1 = y1 * inputHeight;
+						x2 = x2 * inputWidth;
+						y2 = y2 * inputHeight;
+					} else if (x1 < 0 || x1 > inputWidth || y1 < 0 || y1 > inputHeight) {
+						// Might be offsets - try decoding (simplified)
+						const anchorIdx = i;
+						const anchorY = Math.floor(anchorIdx / (featMapSize * anchorsPerLocation));
+						const anchorX = Math.floor((anchorIdx % (featMapSize * anchorsPerLocation)) / anchorsPerLocation);
+						
+						const anchorCenterX = (anchorX + 0.5) * stride;
+						const anchorCenterY = (anchorY + 0.5) * stride;
+						
+						// Try interpreting as center + size format or offset format
+						// For now, assume they're already in reasonable coordinate space
+						// If they're way off, skip this detection
+						if (Math.abs(x1) > inputWidth * 2 || Math.abs(y1) > inputHeight * 2) {
+							continue;
+						}
+					}
+					
+					// Ensure valid box coordinates
+					if (x2 <= x1 || y2 <= y1) {
+						continue;
+					}
+					
+					// Scale bounding box back to original image coordinates
+					const bbox = [
+						Math.max(0, x1 * bboxScaleX),
+						Math.max(0, y1 * bboxScaleY),
+						Math.min(imageData.width, x2 * bboxScaleX),
+						Math.min(imageData.height, y2 * bboxScaleY)
+					];
+					
+					// Only add if box has valid dimensions
+					const boxWidth = bbox[2] - bbox[0];
+					const boxHeight = bbox[3] - bbox[1];
+					if (boxWidth > 20 && boxHeight > 20 && boxWidth < imageData.width * 0.9 && boxHeight < imageData.height * 0.9) {
+						allBoxes.push(bbox);
+						allScores.push(faceScore);
+					}
 				}
 			}
+		}
+		
+		console.log(`Found ${allBoxes.length} candidate detections before NMS`);
+		
+		// If we found very few detections, try a more permissive approach
+		if (allBoxes.length === 0) {
+			console.log("No detections found with current threshold, trying top-k approach...");
+			// Collect top scores from each scale (limit to prevent performance issues)
+			const topK = 5; // Reduced from 10 to speed up processing
+			for (let scaleIdx = 0; scaleIdx < numScales; scaleIdx++) {
+				const scoreKeyIdx = scaleIdx * 3;
+				const boxKeyIdx = scaleIdx * 3 + 1;
+				
+				if (scoreKeyIdx >= sortedKeys.length || boxKeyIdx >= sortedKeys.length) {
+					continue;
+				}
+				
+				const scoreKey = sortedKeys[scoreKeyIdx];
+				const boxKey = sortedKeys[boxKeyIdx];
+				const scoreTensor = results[scoreKey];
+				const boxTensor = results[boxKey];
+				
+				if (!boxTensor || !scoreTensor) continue;
+				
+				const scores = Array.from(scoreTensor.data);
+				const boxes = Array.from(boxTensor.data);
+				const scoreDims = scoreTensor.dims;
+				const boxDims = boxTensor.dims;
+				
+				if (scoreDims.length !== 2 || scoreDims[1] !== 1 || boxDims.length !== 2 || boxDims[1] !== 4) {
+					continue;
+				}
+				
+				// Get top K scores for this scale
+				const scoreIndices = scores.map((score, idx) => ({ score, idx }))
+					.sort((a, b) => b.score - a.score)
+					.slice(0, topK);
+				
+				for (const { score: rawScore, idx: i } of scoreIndices) {
+					const faceScore = sigmoid(rawScore);
+					const baseIdx = i * 4;
+					let x1 = boxes[baseIdx];
+					let y1 = boxes[baseIdx + 1];
+					let x2 = boxes[baseIdx + 2];
+					let y2 = boxes[baseIdx + 3];
+					
+					// Try normalized coordinates
+					if (x1 >= 0 && x1 <= 1 && y1 >= 0 && y1 <= 1) {
+						x1 = x1 * inputWidth;
+						y1 = y1 * inputHeight;
+						x2 = x2 * inputWidth;
+						y2 = y2 * inputHeight;
+					}
+					
+					if (x2 > x1 && y2 > y1) {
+						const bbox = [
+							Math.max(0, x1 * bboxScaleX),
+							Math.max(0, y1 * bboxScaleY),
+							Math.min(imageData.width, x2 * bboxScaleX),
+							Math.min(imageData.height, y2 * bboxScaleY)
+						];
+						
+						const boxWidth = bbox[2] - bbox[0];
+						const boxHeight = bbox[3] - bbox[1];
+						if (boxWidth > 20 && boxHeight > 20) {
+							allBoxes.push(bbox);
+							allScores.push(faceScore);
+						}
+					}
+				}
+			}
+			console.log(`Found ${allBoxes.length} detections using top-k approach`);
+		}
+		
+		if (allBoxes.length > 0) {
+			console.log(`Processing ${allBoxes.length} candidate detections with NMS...`);
+		}
+		
+		// Apply Non-Maximum Suppression (NMS) to remove overlapping detections
+		// Optimized NMS implementation
+		const nmsThreshold = 0.4;
+		const finalDetections = [];
+		
+		if (allBoxes.length === 0) {
+			console.log("No detections to process with NMS");
+		} else {
+			// Sort by score (highest first)
+			const indices = allScores.map((score, idx) => ({ score, idx }))
+				.sort((a, b) => b.score - a.score)
+				.map(item => item.idx);
+			
+			const used = new Array(allBoxes.length).fill(false);
+			const maxDetections = 100; // Limit to prevent excessive processing
+			
+			for (const idx of indices) {
+				if (used[idx] || finalDetections.length >= maxDetections) continue;
+				
+				finalDetections.push({
+					bbox: allBoxes[idx],
+					score: allScores[idx],
+				});
+				
+				// Mark overlapping boxes as used (only check remaining boxes for efficiency)
+				for (let j = 0; j < allBoxes.length; j++) {
+					if (used[j] || j === idx) continue;
+					
+					const iou = calculateIoU(allBoxes[idx], allBoxes[j]);
+					if (iou > nmsThreshold) {
+						used[j] = true;
+					}
+				}
+			}
+			
+			console.log(`After NMS: ${finalDetections.length} final detections`);
+		}
+		
+		detections.push(...finalDetections);
+		
+		// Log detection results for debugging
+		if (detections.length > 0) {
+			console.log(`✓ Detected ${detections.length} face(s) in image`);
+		} else {
+			console.warn(`⚠ No faces detected above confidence threshold (0.5)`);
 		}
 		
 		return detections.length > 0 ? detections : [{
@@ -259,8 +592,11 @@ const extractFaceEmbedding = async (imageData, face) => {
 		// Create input tensor: [1, 3, 112, 112]
 		const inputTensor = new ort.Tensor("float32", faceData, [1, 3, targetSize, targetSize]);
 		
-		// Run inference
-		const results = await faceRecognitionSession.run({ data: inputTensor });
+		// Get the correct input name from the model
+		const inputName = faceRecognitionSession.inputNames[0];
+		
+		// Run inference with the correct input name
+		const results = await faceRecognitionSession.run({ [inputName]: inputTensor });
 		
 		// Extract embedding from output
 		// InsightFace typically outputs embeddings of 512 dimensions

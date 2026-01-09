@@ -90,16 +90,16 @@ const getAuthUrl = async (userId) => {
 	console.log("  - Expected Redirect URI:", env.google.redirectUri);
 	console.log("  - Client ID:", env.google.clientId);
 	console.log("  - State (User ID):", userId);
-	
+
 	// Verify redirect URI is properly encoded in the URL
 	// This helps debug redirect_uri_mismatch errors
 	try {
 		const urlObj = new URL(authUrl);
 		const redirectUriInUrl = decodeURIComponent(urlObj.searchParams.get("redirect_uri") || "");
 		const expectedRedirectUri = env.google.redirectUri.trim().replace(/\/+$/, "");
-		
+
 		console.log("  - Redirect URI in generated URL:", redirectUriInUrl);
-		
+
 		if (redirectUriInUrl && redirectUriInUrl !== expectedRedirectUri) {
 			console.error("⚠️  ERROR: Redirect URI mismatch detected!");
 			console.error("  - Expected (from config):", expectedRedirectUri);
@@ -233,7 +233,7 @@ const getAuthenticatedClient = async (userId) => {
 	if (auth.token_expiry && new Date(auth.token_expiry) <= new Date()) {
 		try {
 			const { credentials } = await oauth2Client.refreshAccessToken();
-			
+
 			// Update stored access token
 			await driveRepository.saveDriveAuth(userId, {
 				accountEmail: auth.account_email,
@@ -295,10 +295,86 @@ const createFolder = async (userId, folderName) => {
 	}
 };
 
+/**
+ * Upload a file to Google Drive folder
+ * @param {number} userId - User ID
+ * @param {string} folderId - Google Drive folder ID
+ * @param {Buffer} fileBuffer - File buffer
+ * @param {string} fileName - File name
+ * @param {string} mimeType - File MIME type
+ * @returns {Promise<string>} File ID
+ * @throws {ApiError} If file upload fails
+ */
+const uploadFile = async (userId, folderId, fileBuffer, fileName, mimeType) => {
+	const oauth2Client = await getAuthenticatedClient(userId);
+	const drive = google.drive({ version: "v3", auth: oauth2Client });
+
+	try {
+		// Convert Buffer to stream for Google Drive API
+		const { Readable } = require("stream");
+		const stream = Readable.from(fileBuffer);
+
+		const response = await drive.files.create({
+			requestBody: {
+				name: fileName,
+				parents: [folderId],
+			},
+			media: {
+				mimeType: mimeType,
+				body: stream,
+			},
+			fields: "id, name",
+		});
+
+		if (!response.data.id) {
+			throw new ApiError(500, "Failed to upload file to Google Drive");
+		}
+
+		return response.data.id;
+	} catch (error) {
+		if (error instanceof ApiError) {
+			throw error;
+		}
+		throw new ApiError(500, `Failed to upload file to Google Drive: ${error.message}`);
+	}
+};
+
+/**
+ * Get a file from Google Drive as a stream
+ * @param {number} userId - User ID who owns the file
+ * @param {string} fileId - Google Drive file ID
+ * @returns {Promise<Object>} Stream object with data and mimeType
+ */
+const getFileStream = async (userId, fileId) => {
+	const oauth2Client = await getAuthenticatedClient(userId);
+	const drive = google.drive({ version: "v3", auth: oauth2Client });
+
+	try {
+		const response = await drive.files.get(
+			{ fileId: fileId, alt: "media" },
+			{ responseType: "stream" }
+		);
+
+		const metadata = await drive.files.get({
+			fileId: fileId,
+			fields: "mimeType",
+		});
+
+		return {
+			data: response.data,
+			mimeType: metadata.data.mimeType,
+		};
+	} catch (error) {
+		throw new ApiError(500, `Failed to fetch file from Google Drive: ${error.message}`);
+	}
+};
+
 module.exports = {
 	getAuthUrl,
 	exchangeCodeForTokens,
 	getAuthStatus,
 	createFolder,
+	uploadFile,
+	getFileStream,
 };
 

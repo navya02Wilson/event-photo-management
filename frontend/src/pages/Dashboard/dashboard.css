@@ -647,7 +647,7 @@
 
 /* QR Code Modal Styles */
 .dashboard_qrcode_modal {
-	max-width: 500px;
+	max-width: 600px;
 }
 
 .dashboard_qrcode_content {
@@ -718,5 +718,145 @@
 .dashboard_qrcode_url:hover {
 	color: #2563eb;
 	text-decoration: underline;
+}
+
+/* Photo Upload Section Styles */
+.dashboard_photo_upload_section {
+	margin-top: 32px;
+	padding-top: 32px;
+	border-top: 1px solid #e2e8f0;
+	width: 100%;
+}
+
+.dashboard_photo_upload_title {
+	font-size: 18px;
+	font-weight: 700;
+	color: #1e293b;
+	margin: 0 0 8px 0;
+}
+
+.dashboard_photo_upload_subtitle {
+	font-size: 14px;
+	color: #64748b;
+	margin: 0 0 20px 0;
+}
+
+.dashboard_photo_upload_button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 12px 24px;
+	background: #3b82f6;
+	color: #ffffff;
+	border: none;
+	border-radius: 8px;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	width: 100%;
+}
+
+.dashboard_photo_upload_button:hover:not(:disabled) {
+	background: #2563eb;
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.dashboard_photo_upload_button:disabled {
+	background: #94a3b8;
+	cursor: not-allowed;
+	opacity: 0.6;
+}
+
+.dashboard_photo_upload_button svg {
+	width: 20px;
+	height: 20px;
+}
+
+.dashboard_photo_upload_preview {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+	gap: 12px;
+	margin-top: 20px;
+}
+
+.dashboard_photo_upload_preview_item {
+	position: relative;
+	aspect-ratio: 1;
+	border-radius: 8px;
+	overflow: hidden;
+	border: 2px solid #e2e8f0;
+	background: #f8fafc;
+}
+
+.dashboard_photo_upload_preview_item img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.dashboard_photo_upload_preview_item span {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	background: rgba(0, 0, 0, 0.7);
+	color: #ffffff;
+	font-size: 10px;
+	padding: 4px 8px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dashboard_photo_upload_progress {
+	margin-top: 20px;
+}
+
+.dashboard_photo_upload_progress_bar {
+	width: 100%;
+	height: 8px;
+	background: #e2e8f0;
+	border-radius: 4px;
+	overflow: hidden;
+	margin-bottom: 8px;
+}
+
+.dashboard_photo_upload_progress_fill {
+	height: 100%;
+	background: #3b82f6;
+	border-radius: 4px;
+	transition: width 0.3s ease;
+	width: 0%;
+}
+
+.dashboard_photo_upload_progress_text {
+	font-size: 12px;
+	color: #64748b;
+	text-align: center;
+	margin: 0;
+}
+
+.dashboard_photo_upload_message {
+	margin-top: 16px;
+	font-size: 14px;
+}
+
+.dashboard_photo_upload_success {
+	padding: 12px;
+	background: #d1fae5;
+	color: #065f46;
+	border-radius: 8px;
+	border: 1px solid #a7f3d0;
+}
+
+.dashboard_photo_upload_error {
+	padding: 12px;
+	background: #fee2e2;
+	color: #991b1b;
+	border-radius: 8px;
+	border: 1px solid #fecaca;
 }
 

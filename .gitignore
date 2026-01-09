@@ -37,3 +37,12 @@ coverage/
 # Temporary files
 tmp/
 temp/
+
+# ML Models (too large for git)
+backend/models/
+models/
+*.onnx
+*.h5
+*.pkl
+*.pt
+*.pth

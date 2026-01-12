@@ -6,6 +6,7 @@
 const eventRepository = require("../repositories/event.repository");
 const driveService = require("./drive.service");
 const ApiError = require("../utils/ApiError");
+const { getFrontendUrlWithLocalIP } = require("../utils/network.util");
 
 /**
  * Create a new event
@@ -119,9 +120,16 @@ const generateQrCode = async (eventId, userId) => {
 		throw new ApiError(403, "Unauthorized to access this event");
 	}
 
-	// Generate public URL for the event
+	// Generate public URL for the event using local network IP
+	// Extract port from frontend URL or use default 5173
 	const env = require("../config/env");
-	const publicUrl = `${env.app.frontendUrl}/public/event/${eventId}`;
+	const frontendUrl = env.app.frontendUrl;
+	const urlMatch = frontendUrl.match(/:(\d+)/);
+	const frontendPort = urlMatch ? parseInt(urlMatch[1], 10) : 5173;
+	
+	// Use local network IP instead of localhost for QR code accessibility
+	const frontendUrlWithLocalIP = getFrontendUrlWithLocalIP(frontendPort);
+	const publicUrl = `${frontendUrlWithLocalIP}/public/event/${eventId}`;
 
 	// Update QR code URL in database
 	const updatedEvent = await eventRepository.updateQrCodeUrl(

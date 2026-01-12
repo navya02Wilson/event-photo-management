@@ -1,4 +1,5 @@
 import Login from "../pages/Login/login.js";
+import Register from "../pages/Register/register.js";
 import GoogleDriveAuth from "../pages/GoogleDriveAuth/googledriveauth.js";
 import CreateEvent from "../pages/CreateEvent/createevent.js";
 import Dashboard from "../pages/Dashboard/dashboard.js";
@@ -13,7 +14,7 @@ class Router {
 		this.routes = {
 			"/": Login,
 			"/login": Login,
-			"/register": null, // TODO: Add Register component
+			"/register": Register,
 			"/forgot-password": null, // TODO: Add ForgotPassword component
 			"/google-drive-auth": GoogleDriveAuth,
 			"/create-event": CreateEvent,

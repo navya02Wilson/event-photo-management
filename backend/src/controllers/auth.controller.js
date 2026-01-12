@@ -41,9 +41,40 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 	);
 });
 
+/**
+ * Register new user
+ * POST /api/auth/register
+ */
+const register = asyncHandler(async (req, res) => {
+	const { name, email, password, confirmPassword } = req.body;
+
+	// Validate required fields
+	if (!name || !email || !password || !confirmPassword) {
+		return res.status(400).json({
+			success: false,
+			message: "Name, email, password, and confirm password are required",
+		});
+	}
+
+	// Validate password match
+	if (password !== confirmPassword) {
+		return res.status(400).json({
+			success: false,
+			message: "Passwords do not match",
+		});
+	}
+
+	const result = await authService.register(name, email, password);
+
+	res.status(201).json(
+		new ApiResponse(201, result, "Registration successful")
+	);
+});
+
 module.exports = {
 	login,
 	getCurrentUser,
+	register,
 };
 
 

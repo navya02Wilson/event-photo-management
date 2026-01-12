@@ -13,15 +13,40 @@ class GoogleDriveAuth {
 		this.init();
 	}
 
-	init() {
+	async init() {
 		// Check callback first - if successful, redirect immediately without rendering
 		const shouldRedirect = this.checkCallback();
 		
 		// Only render if we're not redirecting
 		if (!shouldRedirect) {
-			this.render();
-			this.attachEventListeners();
+			// Check if Google Drive is already authorized
+			const isAuthorized = await this.checkAuthorizationStatus();
+			// Only render if not already authorized (not redirecting)
+			if (!isAuthorized) {
+				this.render();
+				this.attachEventListeners();
+			}
 		}
+	}
+
+	/**
+	 * Check if Google Drive is already authorized
+	 * If authorized, redirect to dashboard
+	 */
+	async checkAuthorizationStatus() {
+		try {
+			const status = await driveAPI.getStatus();
+			if (status.authorized) {
+				// Already authorized, redirect to dashboard
+				console.log("Google Drive already authorized, redirecting to dashboard");
+				router.navigate("/dashboard");
+				return true; // Indicate we're redirecting
+			}
+		} catch (error) {
+			// If status check fails, continue to show authorization page
+			console.warn("Could not check Google Drive authorization status:", error);
+		}
+		return false; // Not redirecting, continue with normal flow
 	}
 
 	/**

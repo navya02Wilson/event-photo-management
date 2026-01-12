@@ -17,6 +17,16 @@ export const LoginFormFieldIds = {
 };
 
 /**
+ * Register form field IDs
+ */
+export const RegisterFormFieldIds = {
+	NAME: "name",
+	EMAIL: "email",
+	PASSWORD: "password",
+	CONFIRM_PASSWORD: "confirmPassword",
+};
+
+/**
  * Login form field types
  */
 export const LoginFormFieldTypes = {

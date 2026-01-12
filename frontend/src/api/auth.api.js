@@ -35,6 +35,22 @@ const authAPI = {
 	},
 
 	/**
+	 * Register new user
+	 * @param {Object} registrationData - Registration data
+	 * @param {string} registrationData.name - User name
+	 * @param {string} registrationData.email - User email
+	 * @param {string} registrationData.password - User password
+	 * @param {string} registrationData.confirmPassword - Confirm password
+	 * @returns {Promise<Object>} User data and tokens
+	 */
+	async register(registrationData) {
+		const response = await axiosInstance.post("/auth/register", registrationData);
+		// Backend returns ApiResponse format: { statusCode, data, message, success }
+		// Extract the actual data from response.data.data
+		return response.data.data || response.data;
+	},
+
+	/**
 	 * Logout user
 	 * @returns {Promise<void>}
 	 */

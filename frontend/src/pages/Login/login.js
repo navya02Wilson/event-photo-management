@@ -2,6 +2,7 @@ import { LoginFormFieldIds } from "../../utils/constants";
 import { getEmailError, getPasswordError } from "../../utils/validators.util";
 import router from "../../routes/router";
 import authAPI from "../../api/auth.api";
+import driveAPI from "../../api/drive.api";
 import "./login.css";
 
 /**
@@ -369,8 +370,21 @@ class Login {
 				buttonText.textContent = "Sign In";
 			}
 
-			// Redirect to Google Drive authorization page after successful login
-			router.navigate("/google-drive-auth");
+			// Check if Google Drive is already authorized before redirecting
+			try {
+				const driveStatus = await driveAPI.getStatus();
+				if (driveStatus.authorized) {
+					// Already authorized, go directly to dashboard
+					router.navigate("/dashboard");
+				} else {
+					// Not authorized, redirect to Google Drive authorization page
+					router.navigate("/google-drive-auth");
+				}
+			} catch (error) {
+				// If status check fails, still redirect to auth page (user can authorize there)
+				console.warn("Could not check Google Drive authorization status:", error);
+				router.navigate("/google-drive-auth");
+			}
 		} catch (error) {
 			// Handle login error
 			this.isSubmitting = false;

@@ -7,6 +7,7 @@ const userRepository = require("../repositories/user.repository");
 const passwordUtil = require("../utils/password.util");
 const tokenUtil = require("../utils/token.util");
 const ApiError = require("../utils/ApiError");
+const { query } = require("../config/database");
 
 /**
  * Login user
@@ -73,9 +74,73 @@ const getCurrentUser = async (userId) => {
 	return user.toJSON();
 };
 
+/**
+ * Register a new user
+ * @param {string} name - User name
+ * @param {string} email - User email
+ * @param {string} password - Plain text password
+ * @returns {Promise<Object>} User data and tokens
+ * @throws {ApiError} If registration fails
+ */
+const register = async (name, email, password) => {
+	// Check if user already exists
+	const userExists = await userRepository.existsByEmail(email);
+	if (userExists) {
+		throw new ApiError(409, "User with this email already exists");
+	}
+
+	// Hash password
+	const hashedPassword = await passwordUtil.hashPassword(password);
+
+	// Create user
+	const user = await userRepository.create({
+		name,
+		email,
+		password: hashedPassword,
+		createdBy: null, // Self-registered
+	});
+
+	// Get ROLE_TEAM role ID
+	const roleResult = await query(
+		"SELECT id FROM roles WHERE role_name = $1",
+		["ROLE_TEAM"]
+	);
+
+	if (roleResult.rows.length === 0) {
+		throw new ApiError(500, "ROLE_TEAM role not found in database");
+	}
+
+	const roleId = roleResult.rows[0].id;
+
+	// Assign ROLE_TEAM role to user
+	await userRepository.assignRole(user.id, roleId);
+
+	// Fetch user with roles
+	const userWithRoles = await userRepository.findById(user.id);
+
+	// Generate tokens
+	const tokenPayload = {
+		id: userWithRoles.id,
+		email: userWithRoles.email,
+		name: userWithRoles.name,
+		roles: userWithRoles.roles,
+	};
+
+	const accessToken = tokenUtil.generateAccessToken(tokenPayload);
+	const refreshToken = tokenUtil.generateRefreshToken(tokenPayload);
+
+	// Return user data (without password) and tokens
+	return {
+		user: userWithRoles.toJSON(),
+		accessToken,
+		refreshToken,
+	};
+};
+
 module.exports = {
 	login,
 	getCurrentUser,
+	register,
 };
 
 

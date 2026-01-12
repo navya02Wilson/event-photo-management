@@ -96,6 +96,41 @@
 	font-weight: 600;
 }
 
+.dashboard_logout_button {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 24px;
+	font-size: 15px;
+	font-weight: 600;
+	color: #64748b;
+	background: transparent;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	letter-spacing: 0.01em;
+}
+
+.dashboard_logout_button:hover {
+	background: #f8fafc;
+	border-color: #cbd5e1;
+	color: #1e293b;
+}
+
+.dashboard_logout_button:active {
+	transform: scale(0.99);
+}
+
+.dashboard_logout_button_icon {
+	width: 20px;
+	height: 20px;
+}
+
+.dashboard_logout_button_text {
+	font-weight: 600;
+}
+
 .dashboard_content {
 	max-width: 1200px;
 	margin: 0 auto;
@@ -602,9 +637,12 @@
 
 	.dashboard_header_right {
 		width: 100%;
+		flex-direction: column;
+		gap: 12px;
 	}
 
-	.dashboard_create_button {
+	.dashboard_create_button,
+	.dashboard_logout_button {
 		width: 100%;
 		justify-content: center;
 	}

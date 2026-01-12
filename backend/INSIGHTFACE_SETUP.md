@@ -144,3 +144,4 @@ console.log(`Embedding dimensions: ${embeddings[0].length}`);
 - InsightFace Model Zoo: https://github.com/deepinsight/insightface#model-zoo
 
 
+

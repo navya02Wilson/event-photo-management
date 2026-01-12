@@ -16,3 +16,4 @@ export PYTHON_SERVICE_HOST=${PYTHON_SERVICE_HOST:-127.0.0.1}
 python main.py
 
 
+

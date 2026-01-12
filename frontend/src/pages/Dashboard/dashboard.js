@@ -1,6 +1,7 @@
 import router from "../../routes/router";
 import eventAPI from "../../api/event.api";
 import photoAPI from "../../api/photo.api";
+import authService from "../../services/auth.service";
 import QRCode from "qrcode";
 import "./dashboard.css";
 
@@ -47,6 +48,14 @@ class Dashboard {
 								<line x1="5" y1="12" x2="19" y2="12"></line>
 							</svg>
 							<span class="dashboard_create_button_text">Create Event</span>
+						</button>
+						<button type="button" class="dashboard_logout_button" id="logoutButton" title="Logout">
+							<svg class="dashboard_logout_button_icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+								<polyline points="16 17 21 12 16 7"></polyline>
+								<line x1="21" y1="12" x2="9" y2="12"></line>
+							</svg>
+							<span class="dashboard_logout_button_text">Logout</span>
 						</button>
 					</div>
 				</div>
@@ -120,6 +129,7 @@ class Dashboard {
 
 	attachEventListeners() {
 		const createButton = this.container.querySelector("#createEventButton");
+		const logoutButton = this.container.querySelector("#logoutButton");
 		const closeModalButton = this.container.querySelector("#closeModalButton");
 		const cancelButton = this.container.querySelector("#cancelButton");
 		const form = this.container.querySelector("#createEventForm");
@@ -130,6 +140,13 @@ class Dashboard {
 		if (createButton) {
 			createButton.addEventListener("click", () => {
 				this.openModal();
+			});
+		}
+
+		// Logout button
+		if (logoutButton) {
+			logoutButton.addEventListener("click", () => {
+				authService.logout();
 			});
 		}
 

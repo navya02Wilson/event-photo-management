@@ -132,3 +132,4 @@ node test-face-recognition.js
 4. ✅ Verify embeddings in database
 
 
+

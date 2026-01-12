@@ -44,3 +44,4 @@ ALTER INDEX idx_guest_selfies_new_embedding RENAME TO idx_guest_selfies_embeddin
 -- Done! Your database is now using JSONB for embeddings
 
 
+

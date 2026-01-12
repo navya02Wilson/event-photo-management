@@ -36,7 +36,7 @@ class Dashboard {
 						<div class="dashboard_logo">
 							<span class="dashboard_logo_icon">📸</span>
 							<div class="dashboard_logo_text">
-								<h1 class="dashboard_logo_title">EventSnap</h1>
+								<h1 class="dashboard_logo_title">EventZnap</h1>
 								<p class="dashboard_logo_subtitle">Manage your event memories effortlessly</p>
 							</div>
 						</div>
@@ -190,10 +190,16 @@ class Dashboard {
 	openModal() {
 		const modal = this.container.querySelector("#createEventModal");
 		const modalContent = this.container.querySelector(".dashboard_modal_content");
+		const closeModalButton = this.container.querySelector("#closeModalButton");
 
 		if (modal) {
 			modal.style.display = "flex";
 			this.isModalOpen = true;
+
+			// Ensure close button is visible
+			if (closeModalButton) {
+				closeModalButton.style.display = "flex";
+			}
 
 			// Check if modal is showing success message, if so reset to form
 			const successMessage = modalContent?.querySelector(".dashboard_modal_success");
@@ -224,8 +230,14 @@ class Dashboard {
 	 */
 	showSuccessMessageInModal(event) {
 		const modalContent = this.container.querySelector(".dashboard_modal_content");
+		const closeModalButton = this.container.querySelector("#closeModalButton");
 		if (!modalContent) {
 			return;
+		}
+
+		// Hide the close button
+		if (closeModalButton) {
+			closeModalButton.style.display = "none";
 		}
 
 		modalContent.innerHTML = `
@@ -300,6 +312,12 @@ class Dashboard {
 				</div>
 			</form>
 		`;
+
+		// Show the close button again
+		const closeModalButton = this.container.querySelector("#closeModalButton");
+		if (closeModalButton) {
+			closeModalButton.style.display = "flex";
+		}
 
 		// Re-attach event listeners
 		const form = this.container.querySelector("#createEventForm");
@@ -748,18 +766,38 @@ class Dashboard {
 		}
 
 		try {
-			const result = await photoAPI.uploadPhotos(
+			const result = await photoAPI.uploadPhotosWithProgress(
 				this.currentEventId,
 				this.selectedFiles,
-				(progress) => {
+				(progressData) => {
+					// Update progress bar based on SSE progress data
+					const percentage = progressData.percentage || 0;
+					const stage = progressData.stage || 'uploading';
+					const message = progressData.message || 'Processing...';
+					const current = progressData.current || 0;
+					const total = progressData.total || this.selectedFiles.length;
+
 					if (progressFill) {
-						progressFill.style.width = `${progress}%`;
+						progressFill.style.width = `${percentage}%`;
 					}
 					if (progressText) {
-						progressText.textContent = `Uploading... ${progress}%`;
+						// Show detailed progress information
+						let progressMessage = message;
+						if (current > 0 && total > 0) {
+							progressMessage = `${message} (${current}/${total})`;
+						}
+						progressText.textContent = `${progressMessage} - ${percentage}%`;
 					}
 				}
 			);
+
+			// Show 100% completion
+			if (progressFill) {
+				progressFill.style.width = "100%";
+			}
+			if (progressText) {
+				progressText.textContent = "Upload complete! - 100%";
+			}
 
 			// Clear selected files after successful request
 			this.selectedFiles = [];

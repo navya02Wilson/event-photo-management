@@ -340,6 +340,95 @@ const uploadFile = async (userId, folderId, fileBuffer, fileName, mimeType) => {
 };
 
 /**
+ * Upload multiple files to Google Drive folder in parallel (batch upload)
+ * Note: Google Drive API doesn't support true batch operations for media uploads,
+ * so this function uses parallel uploads with concurrency control for optimal performance.
+ * @param {number} userId - User ID
+ * @param {string} folderId - Google Drive folder ID
+ * @param {Array<Object>} files - Array of file objects with {buffer, fileName, mimeType}
+ * @param {number} concurrency - Maximum number of concurrent uploads (default: from config)
+ * @param {Function} onProgress - Optional progress callback (current, total)
+ * @returns {Promise<Array<Object>>} Array of results with {fileName, fileId, success, error}
+ */
+const uploadFilesBatch = async (userId, folderId, files, concurrency = null, onProgress = null) => {
+	// Use configured concurrency limit if not provided
+	const maxConcurrency = concurrency || env.google.uploadConcurrency || 5;
+	if (!files || files.length === 0) {
+		return [];
+	}
+
+	// Get authenticated client once for all uploads
+	const oauth2Client = await getAuthenticatedClient(userId);
+	const drive = google.drive({ version: "v3", auth: oauth2Client });
+	const { Readable } = require("stream");
+
+	const results = [];
+	let completedCount = 0;
+
+	// Helper function to upload a single file
+	const uploadSingleFile = async (file) => {
+		try {
+			const stream = Readable.from(file.buffer);
+
+			const response = await drive.files.create({
+				requestBody: {
+					name: file.fileName,
+					parents: [folderId],
+				},
+				media: {
+					mimeType: file.mimeType,
+					body: stream,
+				},
+				fields: "id, name",
+			});
+
+			if (!response.data.id) {
+				throw new Error("Failed to upload file to Google Drive");
+			}
+
+			// Update progress
+			completedCount++;
+			if (onProgress) {
+				onProgress(completedCount, files.length);
+			}
+
+			return {
+				fileName: file.fileName,
+				fileId: response.data.id,
+				success: true,
+			};
+		} catch (error) {
+			// Update progress even on error
+			completedCount++;
+			if (onProgress) {
+				onProgress(completedCount, files.length);
+			}
+
+			return {
+				fileName: file.fileName,
+				fileId: null,
+				success: false,
+				error: error.message || "Unknown error",
+			};
+		}
+	};
+
+	// Process files in batches with concurrency control
+	const processBatch = async (batch) => {
+		return Promise.all(batch.map(uploadSingleFile));
+	};
+
+	// Split files into batches based on concurrency limit
+	for (let i = 0; i < files.length; i += maxConcurrency) {
+		const batch = files.slice(i, i + maxConcurrency);
+		const batchResults = await processBatch(batch);
+		results.push(...batchResults);
+	}
+
+	return results;
+};
+
+/**
  * Get a file from Google Drive as a stream
  * @param {number} userId - User ID who owns the file
  * @param {string} fileId - Google Drive file ID
@@ -375,6 +464,7 @@ module.exports = {
 	getAuthStatus,
 	createFolder,
 	uploadFile,
+	uploadFilesBatch,
 	getFileStream,
 };
 

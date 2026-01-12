@@ -75,6 +75,41 @@ const createFaceEmbedding = async ({ eventId, eventImageId, embedding }) => {
 };
 
 /**
+ * Batch create face embedding records (much faster than individual inserts)
+ * @param {number} eventId - Event ID
+ * @param {number} eventImageId - Event image ID
+ * @param {number[][]} embeddings - Array of embedding vectors (512 dimensions each)
+ * @returns {Promise<Object[]>} Array of created embedding records
+ */
+const createFaceEmbeddingsBatch = async (eventId, eventImageId, embeddings) => {
+	if (!embeddings || embeddings.length === 0) {
+		return [];
+	}
+
+	// Build VALUES clause for batch insert
+	const values = embeddings.map((_, index) => {
+		const paramIndex = index * 3;
+		return `($${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3}::jsonb)`;
+	}).join(', ');
+
+	// Build parameters array
+	const params = embeddings.flatMap(embedding => [
+		eventId,
+		eventImageId,
+		JSON.stringify(embedding)
+	]);
+
+	const result = await query(
+		`INSERT INTO face_embeddings (event_id, event_image_id, embedding)
+		VALUES ${values}
+		RETURNING *`,
+		params
+	);
+
+	return result.rows;
+};
+
+/**
  * Get face embeddings for an event
  * @param {number} eventId - Event ID
  * @returns {Promise<Object[]>} Array of embedding records
@@ -174,6 +209,7 @@ module.exports = {
 	findEventImageById,
 	findEventImagesByEventId,
 	createFaceEmbedding,
+	createFaceEmbeddingsBatch,
 	findFaceEmbeddingsByEventId,
 	findSimilarFaces,
 };

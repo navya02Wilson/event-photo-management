@@ -4,7 +4,6 @@
  */
 
 import axiosInstance from "./axiosInstance";
-import axios from "axios";
 
 /**
  * Photo API object
@@ -47,7 +46,7 @@ const photoAPI = {
 	},
 
 	/**
-	 * Search for similar faces in an event (public endpoint - no auth required)
+	 * Search for similar faces in an event
 	 * @param {number} eventId - Event ID
 	 * @param {File} photo - Search photo
 	 * @returns {Promise<Object>} Search results
@@ -56,12 +55,8 @@ const photoAPI = {
 		const formData = new FormData();
 		formData.append("photo", photo);
 
-		// Use plain axios for public endpoint to avoid auth redirects
-		// Use proxy path in dev, full URL in production
-		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? "/api" : "http://localhost:8080/api");
-		
-		const response = await axios.post(
-			`${API_BASE_URL}/public/events/${eventId}/search-face`,
+		const response = await axiosInstance.post(
+			`/public/events/${eventId}/search-face`,
 			formData,
 			{
 				headers: {

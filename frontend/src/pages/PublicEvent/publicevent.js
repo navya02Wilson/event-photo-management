@@ -97,11 +97,11 @@ class PublicEvent {
 						<h3 class="public_event_search_title">Find Your Photos</h3>
 						<p class="public_event_search_subtitle">Upload a photo to instantly find photos of yourself from this event using AI</p>
 						
-						<div class="public_event_upload_area">
+					<div class="public_event_upload_area">
 						<input type="file" id="searchFileInput" accept="image/*" style="display: none;" />
 						<input type="file" id="cameraFileInput" accept="image/*" capture="environment" style="display: none;" />
 						<div class="public_event_upload_buttons">
-								<button type="button" class="public_event_upload_button" id="galleryButton">
+								<button class="public_event_upload_button" id="galleryButton">
 									<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
 										<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
 										<polyline points="17 8 12 3 7 8"></polyline>
@@ -109,7 +109,7 @@ class PublicEvent {
 									</svg>
 									<span>Choose from Gallery</span>
 								</button>
-								<button type="button" class="public_event_upload_button public_event_camera_button" id="cameraButton">
+								<button class="public_event_upload_button public_event_camera_button" id="cameraButton">
 									<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
 										<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
 										<circle cx="12" cy="13" r="4"></circle>
@@ -186,32 +186,16 @@ class PublicEvent {
 		const cameraFileInput = this.container.querySelector("#cameraFileInput");
 
 		if (galleryButton && searchFileInput) {
-			galleryButton.addEventListener("click", (e) => {
-				e.preventDefault();
-				e.stopPropagation();
-				searchFileInput.click();
-			});
-			searchFileInput.addEventListener("change", (e) => {
-				e.preventDefault();
-				e.stopPropagation();
-				this.handleSearch(e);
-			});
+			galleryButton.addEventListener("click", () => searchFileInput.click());
+			searchFileInput.addEventListener("change", (e) => this.handleSearch(e));
 		}
 
 		if (cameraFileInput) {
-			cameraFileInput.addEventListener("change", (e) => {
-				e.preventDefault();
-				e.stopPropagation();
-				this.handleSearch(e);
-			});
+			cameraFileInput.addEventListener("change", (e) => this.handleSearch(e));
 		}
 
 		if (cameraButton) {
-			cameraButton.addEventListener("click", (e) => {
-				e.preventDefault();
-				e.stopPropagation();
-				this.openCamera();
-			});
+			cameraButton.addEventListener("click", () => this.openCamera());
 		}
 
 		// Camera modal event listeners
@@ -248,20 +232,10 @@ class PublicEvent {
 	}
 
 	async handleSearch(e) {
-		e.preventDefault();
-		e.stopPropagation();
-		
 		const file = e.target.files[0];
-		if (!file) {
-			// Reset the input so the same file can be selected again
-			e.target.value = '';
-			return;
-		}
+		if (!file) return;
 
 		await this.processSearchFile(file);
-		
-		// Reset the input after processing so the same file can be selected again if needed
-		e.target.value = '';
 	}
 
 	async processSearchFile(file) {
@@ -276,16 +250,7 @@ class PublicEvent {
 			this.searchResults = result.matches || [];
 		} catch (error) {
 			console.error("Search failed:", error);
-			
-			// Don't show redirect errors - these are handled by axios interceptor
-			// Just show a user-friendly message
-			if (error.response?.status === 401) {
-				this.searchError = "Authentication required. Please contact the event organizer.";
-			} else if (error.response?.status === 404) {
-				this.searchError = "Event not found. Please check the event link.";
-			} else {
-				this.searchError = error.response?.data?.message || error.message || "Search failed. Please try again.";
-			}
+			this.searchError = error.response?.data?.message || error.message || "Search failed. Please try again.";
 		} finally {
 			this.isSearching = false;
 			this.render();

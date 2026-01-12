@@ -608,7 +608,7 @@ class Dashboard {
 								</svg>
 								<span>Select Photos</span>
 							</button>
-							<div id="photoUploadPreview" class="dashboard_photo_upload_preview"></div>
+							<div id="photoUploadIndicator" class="dashboard_photo_upload_indicator" style="display: none;"></div>
 							<div id="photoUploadProgress" class="dashboard_photo_upload_progress" style="display: none;">
 								<div class="dashboard_photo_upload_progress_bar">
 									<div class="dashboard_photo_upload_progress_fill" id="photoUploadProgressFill"></div>
@@ -660,17 +660,14 @@ class Dashboard {
 	}
 
 	/**
-	 * Handle photo selection and show preview
+	 * Handle photo selection and show indicator
 	 */
 	handlePhotoSelection(files) {
-		const preview = this.container.querySelector("#photoUploadPreview");
+		const indicator = this.container.querySelector("#photoUploadIndicator");
 		const uploadButton = this.container.querySelector("#photoUploadButton");
 		const message = this.container.querySelector("#photoUploadMessage");
 
-		if (!preview || !uploadButton) return;
-
-		// Clear previous preview
-		preview.innerHTML = "";
+		if (!indicator || !uploadButton) return;
 
 		// Validate files
 		const validFiles = [];
@@ -698,41 +695,21 @@ class Dashboard {
 		}
 
 		if (validFiles.length === 0) {
+			// Hide indicator if no valid files
+			if (indicator) {
+				indicator.style.display = "none";
+			}
 			return;
 		}
 
 		// Update state
 		this.selectedFiles = validFiles;
 
-		// Show preview
-		validFiles.forEach((file, index) => {
-			const reader = new FileReader();
-			reader.onload = (e) => {
-				const previewItem = document.createElement("div");
-				previewItem.className = "dashboard_photo_upload_preview_item";
-				previewItem.innerHTML = `
-					<img src="${e.target.result}" alt="${file.name}" />
-					<button type="button" class="dashboard_photo_upload_preview_remove" data-index="${index}" title="Remove photo">
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							<line x1="18" y1="6" x2="6" y2="18"></line>
-							<line x1="6" y1="6" x2="18" y2="18"></line>
-						</svg>
-					</button>
-					<span>${file.name}</span>
-				`;
-				preview.appendChild(previewItem);
-
-				// Attach remove listener
-				const removeBtn = previewItem.querySelector(".dashboard_photo_upload_preview_remove");
-				if (removeBtn) {
-					removeBtn.onclick = (event) => {
-						event.stopPropagation();
-						this.removeSelectedPhoto(index);
-					};
-				}
-			};
-			reader.readAsDataURL(file);
-		});
+		// Show simple text indicator
+		if (indicator) {
+			indicator.textContent = `${validFiles.length} file${validFiles.length > 1 ? "s" : ""} selected`;
+			indicator.style.display = "block";
+		}
 
 		// Update upload button text
 		uploadButton.innerHTML = `
@@ -745,39 +722,6 @@ class Dashboard {
 		`;
 	}
 
-	/**
-	 * Remove a photo from the selection
-	 * @param {number} index - Index of the photo to remove
-	 */
-	removeSelectedPhoto(index) {
-		if (index < 0 || index >= this.selectedFiles.length) return;
-
-		// Remove file from array
-		this.selectedFiles.splice(index, 1);
-
-		// If no files left, reset the button and clear preview
-		if (this.selectedFiles.length === 0) {
-			const preview = this.container.querySelector("#photoUploadPreview");
-			const uploadButton = this.container.querySelector("#photoUploadButton");
-			const photoUploadInput = this.container.querySelector("#photoUploadInput");
-
-			if (preview) preview.innerHTML = "";
-			if (photoUploadInput) photoUploadInput.value = "";
-			if (uploadButton) {
-				uploadButton.innerHTML = `
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-						<polyline points="17 8 12 3 7 8"></polyline>
-						<line x1="12" y1="3" x2="12" y2="15"></line>
-					</svg>
-					<span>Select Photos</span>
-				`;
-			}
-		} else {
-			// Re-trigger selection logic with current files to refresh preview and count
-			this.handlePhotoSelection(this.selectedFiles);
-		}
-	}
 
 	async handlePhotoUpload() {
 		if (!this.currentEventId || this.isUploadingPhotos || this.selectedFiles.length === 0) {
@@ -860,9 +804,9 @@ class Dashboard {
 			if (photoUploadInput) {
 				photoUploadInput.value = "";
 			}
-			const preview = this.container.querySelector("#photoUploadPreview");
-			if (preview) {
-				preview.innerHTML = "";
+			const indicator = this.container.querySelector("#photoUploadIndicator");
+			if (indicator) {
+				indicator.style.display = "none";
 			}
 
 			// Reset button UI
@@ -925,9 +869,9 @@ class Dashboard {
 		if (photoUploadInput) {
 			photoUploadInput.value = "";
 		}
-		const preview = this.container.querySelector("#photoUploadPreview");
-		if (preview) {
-			preview.innerHTML = "";
+		const indicator = this.container.querySelector("#photoUploadIndicator");
+		if (indicator) {
+			indicator.style.display = "none";
 		}
 		const message = this.container.querySelector("#photoUploadMessage");
 		if (message) {

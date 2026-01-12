@@ -258,60 +258,103 @@ class PublicEvent {
 	}
 
 	async openCamera() {
+		// Detect if we're on a mobile device (phone/tablet, not laptop/desktop)
+		// On mobile, the capture attribute works; on desktop it just opens file picker
+		// We check user agent first, then screen size, but NOT touch capability (many laptops have touchscreens)
+		const userAgent = navigator.userAgent || '';
+		const isMobileUserAgent = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+		const isSmallScreen = window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
+		// Only consider it mobile if it's a mobile user agent OR (small screen AND not a desktop OS)
+		const isDesktopOS = /Windows|Macintosh|Linux/i.test(userAgent) && !/Android/i.test(userAgent);
+		const isMobileDevice = isMobileUserAgent || (isSmallScreen && !isDesktopOS);
+
 		// Check if we're in a secure context (HTTPS or localhost)
+		// Note: IP addresses (192.168.x.x, 10.x.x.x, etc.) on HTTP are NOT secure contexts
 		const isSecureContext = window.isSecureContext || 
 			window.location.protocol === 'https:' || 
 			window.location.hostname === 'localhost' || 
 			window.location.hostname === '127.0.0.1';
+		
+		// Check if we're accessing via IP address (common when testing on network)
+		const isIPAddress = /^\d+\.\d+\.\d+\.\d+$/.test(window.location.hostname);
 
-		// On HTTP with network IP, use file input with capture attribute as fallback
-		// This works on HTTP, especially on mobile devices
-		if (!isSecureContext) {
-			const cameraFileInput = this.container.querySelector("#cameraFileInput");
-			if (cameraFileInput) {
-				// Clear any previous selection
-				cameraFileInput.value = '';
-				// Trigger the file input with camera capture
-				cameraFileInput.click();
-				return;
-			}
-		}
-
-		// Try getUserMedia API (works on HTTPS or localhost)
+		// Always try getUserMedia API first (works on HTTPS, localhost, and some browsers on HTTP)
+		// Try even on HTTP - some browsers/configurations might allow it
 		try {
-			// Request camera access directly - let the browser try even on HTTP
-			// The browser will throw an error if it's not supported or blocked
 			let stream;
 			
 			if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-				// Modern API - try this first
-				stream = await navigator.mediaDevices.getUserMedia({
-					video: {
-						facingMode: 'environment', // Use rear camera on mobile
-						width: { ideal: 1280 },
-						height: { ideal: 720 }
-					},
-					audio: false
-				});
-			} else if (navigator.getUserMedia) {
-				// Legacy API (wrapped in Promise)
-				stream = await new Promise((resolve, reject) => {
-					navigator.getUserMedia({
+				// Modern API - try this first, even on HTTP
+				// Some browsers might allow it if user has granted permission before
+				try {
+					stream = await navigator.mediaDevices.getUserMedia({
 						video: {
-							facingMode: 'environment',
+							facingMode: 'environment', // Use rear camera on mobile
 							width: { ideal: 1280 },
 							height: { ideal: 720 }
 						},
 						audio: false
-					}, resolve, reject);
-				});
+					});
+				} catch (getUserMediaError) {
+					// If facingMode fails (e.g., desktop doesn't have rear camera), try without it
+					if (getUserMediaError.name === "OverconstrainedError" || getUserMediaError.name === "ConstraintNotSatisfiedError") {
+						console.log("Trying getUserMedia without facingMode constraint");
+						stream = await navigator.mediaDevices.getUserMedia({
+							video: {
+								width: { ideal: 1280 },
+								height: { ideal: 720 }
+							},
+							audio: false
+						});
+					} else {
+						throw getUserMediaError;
+					}
+				}
+			} else if (navigator.getUserMedia) {
+				// Legacy API (wrapped in Promise) - try even on HTTP
+				try {
+					stream = await new Promise((resolve, reject) => {
+						navigator.getUserMedia({
+							video: {
+								facingMode: 'environment',
+								width: { ideal: 1280 },
+								height: { ideal: 720 }
+							},
+							audio: false
+						}, resolve, reject);
+					});
+				} catch (legacyError) {
+					// Try without facingMode if it fails
+					if (legacyError.name === "OverconstrainedError" || legacyError.name === "ConstraintNotSatisfiedError") {
+						console.log("Trying legacy getUserMedia without facingMode constraint");
+						stream = await new Promise((resolve, reject) => {
+							navigator.getUserMedia({
+								video: {
+									width: { ideal: 1280 },
+									height: { ideal: 720 }
+								},
+								audio: false
+							}, resolve, reject);
+						});
+					} else {
+						throw legacyError;
+					}
+				}
 			} else {
-				// No camera API available - fallback to file input
-				const cameraFileInput = this.container.querySelector("#cameraFileInput");
-				if (cameraFileInput) {
-					cameraFileInput.value = '';
-					cameraFileInput.click();
-					return;
+				// No camera API available
+				// Only fallback to file input on mobile devices where capture attribute works
+				// NEVER use file input on desktop - it just opens file picker, not camera
+				if (isMobileDevice && !isDesktopOS) {
+					const cameraFileInput = this.container.querySelector("#cameraFileInput");
+					if (cameraFileInput) {
+						cameraFileInput.value = '';
+						cameraFileInput.click();
+						return;
+					}
+				}
+				// Provide better error message based on context
+				if (!isSecureContext) {
+					throw new Error("Camera access requires HTTPS or localhost. Please use HTTPS or try 'Choose from Gallery' instead.");
 				}
 				throw new Error("Camera API not available in this browser");
 			}
@@ -331,20 +374,40 @@ class PublicEvent {
 			}, 100);
 		} catch (error) {
 			console.error("Error accessing camera:", error);
+			console.log("Device detection - isMobileDevice:", isMobileDevice, "isDesktopOS:", isDesktopOS);
+			console.log("Secure context:", isSecureContext, "Protocol:", window.location.protocol, "Hostname:", window.location.hostname);
 			
-			// If getUserMedia fails, fallback to file input with capture
+			// Try file input fallback on both mobile and desktop
+			// On mobile, capture attribute opens camera; on desktop browsers don't support this
+			// but we'll try anyway - worst case it opens file picker which user can use
 			const cameraFileInput = this.container.querySelector("#cameraFileInput");
 			if (cameraFileInput) {
-				console.log("Falling back to file input with capture attribute");
+				console.log("Falling back to file input with capture attribute (device:", isMobileDevice ? "mobile" : "desktop", ")");
+				console.log("Note: On desktop, this may open file picker instead of camera");
 				cameraFileInput.value = '';
 				cameraFileInput.click();
+				// Return early - on mobile this opens camera, on desktop it opens file picker
+				// User can still select a photo file if camera doesn't open
 				return;
 			}
 
-			// If fallback also fails, show error
+			// On desktop or if fallback fails, show error message
 			let errorMessage = "Unable to access camera. ";
 			
-			if (error.message?.includes("Camera API not available") || error.message?.includes("not available in this browser")) {
+			// Check for HTTPS/security context issues first
+			if (!isSecureContext && (error.name === "NotAllowedError" || error.name === "SecurityError" || error.name === "NotSupportedError" || 
+				error.message?.includes("HTTPS") || error.message?.includes("secure context"))) {
+				errorMessage += "Camera access requires HTTPS (secure connection) or localhost. ";
+				if (isIPAddress) {
+					errorMessage += "You are accessing via IP address (" + window.location.hostname + ") on HTTP. ";
+					errorMessage += "Desktop browsers require HTTPS or localhost for camera access. ";
+					errorMessage += "Solutions: (1) Access via 'http://localhost' instead, (2) Map a domain to localhost in hosts file, or (3) Set up HTTPS. ";
+					errorMessage += "See CAMERA_ACCESS_WORKAROUND.md for details. ";
+				} else {
+					errorMessage += "You are currently on HTTP. Please use HTTPS or access via localhost. ";
+				}
+				errorMessage += "Alternatively, use 'Choose from Gallery' to upload a photo instead.";
+			} else if (error.message?.includes("Camera API not available") || error.message?.includes("not available in this browser")) {
 				errorMessage += "Your browser does not support camera access. Please use a modern browser or try 'Choose from Gallery' instead.";
 			} else if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
 				errorMessage += "Please allow camera permissions and try again.";
@@ -352,6 +415,10 @@ class PublicEvent {
 				errorMessage += "No camera found on this device.";
 			} else if (error.name === "NotReadableError" || error.name === "TrackStartError") {
 				errorMessage += "Camera is already in use by another application.";
+			} else if (error.name === "NotSupportedError" || error.name === "SecurityError") {
+				errorMessage += "Camera access requires HTTPS. Please use 'Choose from Gallery' to upload a photo instead.";
+			} else if (error.message?.includes("HTTPS") || error.message?.includes("localhost")) {
+				errorMessage += error.message;
 			} else {
 				errorMessage += "Please try again or use 'Choose from Gallery' instead.";
 			}

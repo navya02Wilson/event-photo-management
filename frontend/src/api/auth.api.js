@@ -33,9 +33,25 @@ const authAPI = {
 		// Extract the actual data from response.data.data
 		return response.data.data || response.data;
 	},
+
+	/**
+	 * Logout user
+	 * @returns {Promise<void>}
+	 */
+	async logout() {
+		// Optional: Call backend logout endpoint if it exists
+		// For now, we'll just clear local storage on the frontend
+		// If backend logout endpoint is added later, uncomment below:
+		// try {
+		// 	await axiosInstance.post("/auth/logout");
+		// } catch (error) {
+		// 	console.error("Logout API call failed:", error);
+		// }
+	},
 };
 
 export default authAPI;
+
 
 
 

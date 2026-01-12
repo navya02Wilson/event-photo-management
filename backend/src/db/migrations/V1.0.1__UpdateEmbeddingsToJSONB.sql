@@ -56,3 +56,4 @@ ALTER INDEX idx_guest_selfies_new_event_id RENAME TO idx_guest_selfies_event_id;
 ALTER INDEX idx_guest_selfies_new_embedding RENAME TO idx_guest_selfies_embedding;
 
 
+

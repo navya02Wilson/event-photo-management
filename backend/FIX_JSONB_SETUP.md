@@ -107,3 +107,4 @@ The `embedding` column should show a JSON array like `[0.123, -0.456, ...]`.
 - No extension installation needed!
 
 
+

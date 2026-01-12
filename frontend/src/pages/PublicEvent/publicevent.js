@@ -65,7 +65,7 @@ class PublicEvent {
 				<header class="public_event_header_bar">
 					<div class="public_event_logo">
 						<span class="public_event_logo_icon">📸</span>
-						<h1 class="public_event_logo_title">EventSnap</h1>
+						<h1 class="public_event_logo_title">Eventz</h1>
 					</div>
 				</header>
 

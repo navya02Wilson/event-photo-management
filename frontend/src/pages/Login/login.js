@@ -47,7 +47,7 @@ class Login {
 							<div class="login_logo">
 								<span class="login_logo_icon">📸</span>
 								<div class="login_logo_text">
-									<h1 class="login_logo_title">EventSnap</h1>
+									<h1 class="login_logo_title">Eventz</h1>
 									<p class="login_logo_subtitle">Manage your event memories effortlessly</p>
 								</div>
 							</div>

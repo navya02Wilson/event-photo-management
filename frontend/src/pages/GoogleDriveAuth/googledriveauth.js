@@ -93,7 +93,7 @@ class GoogleDriveAuth {
 						<div class="drive_auth_logo">
 							<span class="drive_auth_logo_icon">📸</span>
 							<div class="drive_auth_logo_text">
-								<h1 class="drive_auth_logo_title">EventSnap</h1>
+								<h1 class="drive_auth_logo_title">Eventz</h1>
 								<p class="drive_auth_logo_subtitle">Manage your event memories effortlessly</p>
 							</div>
 						</div>
@@ -150,7 +150,7 @@ class GoogleDriveAuth {
 						
 						<div class="drive_auth_info">
 							<p class="drive_auth_info_text">
-								By authorizing, you grant EventSnap permission to create folders and upload photos to your Google Drive. 
+								By authorizing, you grant Eventz permission to create folders and upload photos to your Google Drive. 
 								You can revoke access at any time from your Google Account settings.
 							</p>
 						</div>

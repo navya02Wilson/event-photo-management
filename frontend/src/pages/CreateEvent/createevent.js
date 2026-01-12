@@ -26,7 +26,7 @@ class CreateEvent {
 						<div class="create_event_logo">
 							<span class="create_event_logo_icon">📸</span>
 							<div class="create_event_logo_text">
-								<h1 class="create_event_logo_title">EventSnap</h1>
+								<h1 class="create_event_logo_title">Eventz</h1>
 								<p class="create_event_logo_subtitle">Manage your event memories effortlessly</p>
 							</div>
 						</div>

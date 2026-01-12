@@ -36,7 +36,7 @@ class Dashboard {
 						<div class="dashboard_logo">
 							<span class="dashboard_logo_icon">📸</span>
 							<div class="dashboard_logo_text">
-								<h1 class="dashboard_logo_title">EventSnap</h1>
+								<h1 class="dashboard_logo_title">Eventz</h1>
 								<p class="dashboard_logo_subtitle">Manage your event memories effortlessly</p>
 							</div>
 						</div>

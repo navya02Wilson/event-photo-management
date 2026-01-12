@@ -16,6 +16,8 @@ class PublicEvent {
 		this.isSearching = false;
 		this.searchResults = [];
 		this.searchError = null;
+		this.cameraStream = null;
+		this.isCameraOpen = false;
 		this.init();
 	}
 
@@ -97,14 +99,23 @@ class PublicEvent {
 						
 						<div class="public_event_upload_area">
 							<input type="file" id="searchFileInput" accept="image/*" style="display: none;" />
-							<button class="public_event_upload_button" id="searchButton">
-								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-									<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-									<polyline points="17 8 12 3 7 8"></polyline>
-									<line x1="12" y1="3" x2="12" y2="15"></line>
-								</svg>
-								<span>Upload Photo to Search</span>
-							</button>
+							<div class="public_event_upload_buttons">
+								<button class="public_event_upload_button" id="galleryButton">
+									<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+										<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+										<polyline points="17 8 12 3 7 8"></polyline>
+										<line x1="12" y1="3" x2="12" y2="15"></line>
+									</svg>
+									<span>Choose from Gallery</span>
+								</button>
+								<button class="public_event_upload_button public_event_camera_button" id="cameraButton">
+									<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+										<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+										<circle cx="12" cy="13" r="4"></circle>
+									</svg>
+									<span>Take Photo</span>
+								</button>
+							</div>
 						</div>
 
 						${this.isSearching ? `
@@ -120,6 +131,8 @@ class PublicEvent {
 							</div>
 						` : ""}
 					</section>
+
+					${this.isCameraOpen ? this.renderCameraModal() : ""}
 
 					${this.hasSearched && !this.isSearching ? `
 						<div class="public_event_results">
@@ -166,12 +179,49 @@ class PublicEvent {
 	}
 
 	attachEventListeners() {
-		const searchButton = this.container.querySelector("#searchButton");
+		const galleryButton = this.container.querySelector("#galleryButton");
+		const cameraButton = this.container.querySelector("#cameraButton");
 		const searchFileInput = this.container.querySelector("#searchFileInput");
 
-		if (searchButton && searchFileInput) {
-			searchButton.addEventListener("click", () => searchFileInput.click());
+		if (galleryButton && searchFileInput) {
+			galleryButton.addEventListener("click", () => searchFileInput.click());
 			searchFileInput.addEventListener("change", (e) => this.handleSearch(e));
+		}
+
+		if (cameraButton) {
+			cameraButton.addEventListener("click", () => this.openCamera());
+		}
+
+		// Camera modal event listeners
+		const cameraModal = this.container.querySelector("#cameraModal");
+		const closeCameraBtn = this.container.querySelector("#closeCameraBtn");
+		const capturePhotoBtn = this.container.querySelector("#capturePhotoBtn");
+		const retakePhotoBtn = this.container.querySelector("#retakePhotoBtn");
+		const usePhotoBtn = this.container.querySelector("#usePhotoBtn");
+
+		if (cameraModal) {
+			// Close modal when clicking outside
+			cameraModal.addEventListener("click", (e) => {
+				if (e.target === cameraModal) {
+					this.closeCamera();
+				}
+			});
+		}
+
+		if (closeCameraBtn) {
+			closeCameraBtn.addEventListener("click", () => this.closeCamera());
+		}
+
+		if (capturePhotoBtn) {
+			capturePhotoBtn.addEventListener("click", () => this.capturePhoto());
+		}
+
+		if (retakePhotoBtn) {
+			retakePhotoBtn.addEventListener("click", () => this.retakePhoto());
+		}
+
+		if (usePhotoBtn) {
+			usePhotoBtn.addEventListener("click", () => this.useCapturedPhoto());
 		}
 	}
 
@@ -179,6 +229,10 @@ class PublicEvent {
 		const file = e.target.files[0];
 		if (!file) return;
 
+		await this.processSearchFile(file);
+	}
+
+	async processSearchFile(file) {
 		this.isSearching = true;
 		this.searchError = null;
 		this.searchResults = [];
@@ -195,6 +249,159 @@ class PublicEvent {
 			this.isSearching = false;
 			this.render();
 		}
+	}
+
+	async openCamera() {
+		try {
+			// Request camera access
+			const stream = await navigator.mediaDevices.getUserMedia({
+				video: {
+					facingMode: 'environment', // Use rear camera on mobile
+					width: { ideal: 1280 },
+					height: { ideal: 720 }
+				},
+				audio: false
+			});
+
+			this.cameraStream = stream;
+			this.isCameraOpen = true;
+			this.capturedPhotoDataUrl = null;
+			this.render();
+
+			// Wait for DOM to update, then attach stream to video element
+			setTimeout(() => {
+				const videoElement = this.container.querySelector("#cameraVideo");
+				if (videoElement && stream) {
+					videoElement.srcObject = stream;
+					videoElement.play();
+				}
+			}, 100);
+		} catch (error) {
+			console.error("Error accessing camera:", error);
+			let errorMessage = "Unable to access camera. ";
+			
+			if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+				errorMessage += "Please allow camera permissions and try again.";
+			} else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+				errorMessage += "No camera found on this device.";
+			} else if (error.name === "NotReadableError" || error.name === "TrackStartError") {
+				errorMessage += "Camera is already in use by another application.";
+			} else {
+				errorMessage += error.message || "Please try again.";
+			}
+
+			this.searchError = errorMessage;
+			this.render();
+		}
+	}
+
+	closeCamera() {
+		// Stop camera stream
+		if (this.cameraStream) {
+			this.cameraStream.getTracks().forEach(track => track.stop());
+			this.cameraStream = null;
+		}
+
+		this.isCameraOpen = false;
+		this.capturedPhotoDataUrl = null;
+		this.render();
+	}
+
+	capturePhoto() {
+		const videoElement = this.container.querySelector("#cameraVideo");
+		if (!videoElement) return;
+
+		// Create canvas to capture the photo
+		const canvas = document.createElement("canvas");
+		canvas.width = videoElement.videoWidth;
+		canvas.height = videoElement.videoHeight;
+		
+		const ctx = canvas.getContext("2d");
+		ctx.drawImage(videoElement, 0, 0);
+
+		// Convert to data URL
+		this.capturedPhotoDataUrl = canvas.toDataURL("image/jpeg", 0.9);
+		
+		// Stop the video stream
+		if (this.cameraStream) {
+			this.cameraStream.getTracks().forEach(track => track.stop());
+			this.cameraStream = null;
+		}
+
+		this.render();
+	}
+
+	retakePhoto() {
+		this.capturedPhotoDataUrl = null;
+		this.openCamera();
+	}
+
+	async useCapturedPhoto() {
+		if (!this.capturedPhotoDataUrl) return;
+
+		// Convert data URL to File object
+		const response = await fetch(this.capturedPhotoDataUrl);
+		const blob = await response.blob();
+		const file = new File([blob], "camera-photo.jpg", { type: "image/jpeg" });
+
+		// Close camera modal
+		this.isCameraOpen = false;
+		this.capturedPhotoDataUrl = null;
+
+		// Process the photo
+		await this.processSearchFile(file);
+	}
+
+	renderCameraModal() {
+		return `
+			<div class="public_event_camera_modal" id="cameraModal">
+				<div class="public_event_camera_modal_content">
+					<div class="public_event_camera_header">
+						<h3>Take a Photo</h3>
+						<button class="public_event_camera_close" id="closeCameraBtn" aria-label="Close camera">
+							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<line x1="18" y1="6" x2="6" y2="18"></line>
+								<line x1="6" y1="6" x2="18" y2="18"></line>
+							</svg>
+						</button>
+					</div>
+					
+					<div class="public_event_camera_preview">
+						${this.capturedPhotoDataUrl ? `
+							<img src="${this.capturedPhotoDataUrl}" alt="Captured photo" id="capturedPhoto" />
+						` : `
+							<video id="cameraVideo" autoplay playsinline></video>
+							<div class="public_event_camera_overlay"></div>
+						`}
+					</div>
+
+					<div class="public_event_camera_controls">
+						${this.capturedPhotoDataUrl ? `
+							<button class="public_event_camera_btn public_event_camera_btn_secondary" id="retakePhotoBtn">
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+									<polyline points="23 4 23 10 17 10"></polyline>
+									<polyline points="1 20 1 14 7 14"></polyline>
+									<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+								</svg>
+								<span>Retake</span>
+							</button>
+							<button class="public_event_camera_btn public_event_camera_btn_primary" id="usePhotoBtn">
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+									<polyline points="20 6 9 17 4 12"></polyline>
+								</svg>
+								<span>Use Photo</span>
+							</button>
+						` : `
+							<button class="public_event_camera_capture_btn" id="capturePhotoBtn" aria-label="Capture photo">
+								<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+									<circle cx="12" cy="12" r="10"></circle>
+								</svg>
+							</button>
+						`}
+					</div>
+				</div>
+			</div>
+		`;
 	}
 
 	renderError(message) {
@@ -238,7 +445,12 @@ class PublicEvent {
 	}
 
 	cleanup() {
-		// Cleanup if needed
+		// Stop camera stream if active
+		if (this.cameraStream) {
+			this.cameraStream.getTracks().forEach(track => track.stop());
+			this.cameraStream = null;
+		}
+		this.isCameraOpen = false;
 	}
 }
 

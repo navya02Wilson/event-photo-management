@@ -65,7 +65,7 @@ class PublicEvent {
 				<header class="public_event_header_bar">
 					<div class="public_event_logo">
 						<span class="public_event_logo_icon">📸</span>
-						<h1 class="public_event_logo_title">EventSnap</h1>
+						<h1 class="public_event_logo_title">EventZnap</h1>
 					</div>
 				</header>
 
@@ -95,7 +95,7 @@ class PublicEvent {
 
 					<section class="public_event_search_section">
 						<h3 class="public_event_search_title">Find Your Photos</h3>
-						<p class="public_event_search_subtitle">Upload a photo to instantly find photos of yourself from this event using AI</p>
+						<p class="public_event_search_subtitle">Upload a photo to instantly find photos of yourself from this event</p>
 						
 					<div class="public_event_upload_area">
 						<input type="file" id="searchFileInput" accept="image/*" style="display: none;" />

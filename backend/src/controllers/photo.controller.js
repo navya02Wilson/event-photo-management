@@ -10,6 +10,7 @@ const photoService = require("../services/photo.service");
 /**
  * Upload photos for an event
  * POST /api/events/:id/photos
+ * Supports Server-Sent Events (SSE) for progress updates if ?progress=true query param is provided
  */
 const uploadPhotos = asyncHandler(async (req, res) => {
 	const userId = Number(req.user.id);
@@ -29,30 +30,84 @@ const uploadPhotos = asyncHandler(async (req, res) => {
 		});
 	}
 
-	try {
-		const result = await photoService.uploadPhotos(eventId, userId, req.files);
+	// Check if SSE progress updates are requested
+	const useSSE = req.query.progress === 'true' || req.headers.accept === 'text/event-stream';
 
-		// Return appropriate status code based on results
-		const statusCode = result.failed > 0 && result.successful === 0 ? 400 : 200;
-		const message = result.failed > 0
-			? `Uploaded ${result.successful} photo(s), ${result.failed} failed`
-			: "Photos uploaded successfully";
+	if (useSSE) {
+		// Set up Server-Sent Events
+		res.setHeader('Content-Type', 'text/event-stream');
+		res.setHeader('Cache-Control', 'no-cache');
+		res.setHeader('Connection', 'keep-alive');
+		res.setHeader('X-Accel-Buffering', 'no'); // Disable buffering for nginx
 
-		// Include error details in response for debugging
-		if (result.errors && result.errors.length > 0) {
-			console.error("Photo upload errors:", result.errors);
+		// Send initial connection message
+		res.write(`data: ${JSON.stringify({ type: 'connected', message: 'Upload started' })}\n\n`);
+
+		// Progress callback for SSE
+		const onProgress = (progressData) => {
+			try {
+				res.write(`data: ${JSON.stringify({ type: 'progress', ...progressData })}\n\n`);
+			} catch (error) {
+				console.error('Error sending progress update:', error);
+			}
+		};
+
+		try {
+			const result = await photoService.uploadPhotos(eventId, userId, req.files, onProgress);
+
+			// Send final result
+			const statusCode = result.failed > 0 && result.successful === 0 ? 400 : 200;
+			res.write(`data: ${JSON.stringify({ 
+				type: 'complete', 
+				result,
+				statusCode,
+				message: result.failed > 0
+					? `Uploaded ${result.successful} photo(s), ${result.failed} failed`
+					: "Photos uploaded successfully"
+			})}\n\n`);
+
+			// Include error details in response for debugging
+			if (result.errors && result.errors.length > 0) {
+				console.error("Photo upload errors:", result.errors);
+			}
+
+			res.end();
+		} catch (error) {
+			console.error("Photo upload controller error:", error);
+			res.write(`data: ${JSON.stringify({ 
+				type: 'error', 
+				message: error.message || "Failed to upload photos",
+				error: process.env.NODE_ENV === "development" ? error.stack : undefined
+			})}\n\n`);
+			res.end();
 		}
+	} else {
+		// Regular JSON response without progress updates
+		try {
+			const result = await photoService.uploadPhotos(eventId, userId, req.files);
 
-		res.status(statusCode).json(
-			new ApiResponse(statusCode, result, message)
-		);
-	} catch (error) {
-		console.error("Photo upload controller error:", error);
-		return res.status(500).json({
-			success: false,
-			message: error.message || "Failed to upload photos",
-			error: process.env.NODE_ENV === "development" ? error.stack : undefined,
-		});
+			// Return appropriate status code based on results
+			const statusCode = result.failed > 0 && result.successful === 0 ? 400 : 200;
+			const message = result.failed > 0
+				? `Uploaded ${result.successful} photo(s), ${result.failed} failed`
+				: "Photos uploaded successfully";
+
+			// Include error details in response for debugging
+			if (result.errors && result.errors.length > 0) {
+				console.error("Photo upload errors:", result.errors);
+			}
+
+			res.status(statusCode).json(
+				new ApiResponse(statusCode, result, message)
+			);
+		} catch (error) {
+			console.error("Photo upload controller error:", error);
+			return res.status(500).json({
+				success: false,
+				message: error.message || "Failed to upload photos",
+				error: process.env.NODE_ENV === "development" ? error.stack : undefined,
+			});
+		}
 	}
 });
 

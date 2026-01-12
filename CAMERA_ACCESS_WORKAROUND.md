@@ -17,12 +17,12 @@ You can map a custom domain name to `localhost` so browsers treat it as a secure
 
 3. Add this line at the end:
    ```
-   127.0.0.1    eventsnap.local
+   127.0.0.1    eventznap.local
    ```
 
 4. Save the file
 
-5. Access your app via: `http://eventsnap.local:5173` (or whatever port you're using)
+5. Access your app via: `http://eventznap.local:5173` (or whatever port you're using)
 
 ### Mac/Linux
 
@@ -35,12 +35,12 @@ You can map a custom domain name to `localhost` so browsers treat it as a secure
 
 3. Add this line:
    ```
-   127.0.0.1    eventsnap.local
+   127.0.0.1    eventznap.local
    ```
 
 4. Save (Ctrl+X, then Y, then Enter)
 
-5. Access your app via: `http://eventsnap.local:5173`
+5. Access your app via: `http://eventznap.local:5173`
 
 ## Alternative: Browser Flags (Not Recommended for Production)
 

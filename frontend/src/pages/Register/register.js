@@ -52,7 +52,7 @@ class Register {
 							<div class="register_logo">
 								<span class="register_logo_icon">📸</span>
 								<div class="register_logo_text">
-									<h1 class="register_logo_title">EventSnap</h1>
+									<h1 class="register_logo_title">EventZnap</h1>
 									<p class="register_logo_subtitle">Manage your event memories effortlessly</p>
 								</div>
 							</div>

@@ -51,6 +51,8 @@ const env = {
 			// This ensures exact match with Google Cloud Console
 			return uri.trim().replace(/\/+$/, "");
 		})(),
+		// Google Drive upload configuration
+		uploadConcurrency: parseInt(process.env.GOOGLE_DRIVE_UPLOAD_CONCURRENCY || "5", 10),
 	},
 
 	// Application URLs
@@ -63,6 +65,11 @@ const env = {
 	pythonService: {
 		url: process.env.PYTHON_SERVICE_URL || "http://127.0.0.1:8000",
 		timeout: parseInt(process.env.PYTHON_SERVICE_TIMEOUT || "300000", 10),
+	},
+
+	// Photo processing configuration
+	photoProcessing: {
+		concurrency: parseInt(process.env.PHOTO_PROCESSING_CONCURRENCY || "3", 10),
 	},
 };
 

@@ -12,6 +12,7 @@ const photoRepository = require("../repositories/photo.repository");
 const driveService = require("./drive.service");
 const pythonFaceService = require("./python-face.service");
 const ApiError = require("../utils/ApiError");
+const env = require("../config/env");
 
 /**
  * Configure multer for temporary file storage
@@ -71,10 +72,11 @@ const getSingleUploadMiddleware = (fieldName = "photo") => {
  * @param {number} eventId - Event ID
  * @param {number} userId - User ID (for authorization check)
  * @param {Array} files - Array of uploaded files
+ * @param {Function} onProgress - Optional progress callback (stage, current, total, message)
  * @returns {Promise<Object>} Upload result with photo metadata
  * @throws {ApiError} If upload fails
  */
-const uploadPhotos = async (eventId, userId, files) => {
+const uploadPhotos = async (eventId, userId, files, onProgress = null) => {
 	if (!files || files.length === 0) {
 		throw new ApiError(400, "No photos provided");
 	}
@@ -94,73 +96,207 @@ const uploadPhotos = async (eventId, userId, files) => {
 
 	const uploadedPhotos = [];
 	const errors = [];
+	const totalFiles = files.length;
 
-	// Process each photo
-	for (const file of files) {
+	// Progress tracking stages
+	const STAGES = {
+		READING: 'reading',
+		UPLOADING: 'uploading',
+		PROCESSING: 'processing',
+		COMPLETE: 'complete'
+	};
+
+	// Helper function to send progress updates
+	const sendProgress = (stage, current, total, message = '') => {
+		if (onProgress) {
+			const percentage = Math.round((current / total) * 100);
+			onProgress({
+				stage,
+				current,
+				total,
+				percentage,
+				message
+			});
+		}
+	};
+
+	// Step 1: Read all file buffers and prepare for batch upload
+	sendProgress(STAGES.READING, 0, totalFiles, 'Reading files...');
+	const filesToUpload = [];
+	const fileDataMap = new Map(); // Map to store file data for processing after upload
+
+	for (let i = 0; i < files.length; i++) {
+		const file = files[i];
 		try {
-			// Read file buffer
 			const fileBuffer = fs.readFileSync(file.path);
 			const fileName = file.originalname;
 			const mimeType = file.mimetype;
 
-			// Upload to Google Drive
-			const driveFileId = await driveService.uploadFile(
-				userId,
-				event.storageFolderId,
-				fileBuffer,
-				fileName,
-				mimeType
-			);
-
-			// Extract face embeddings using Python service
-			const embeddings = await pythonFaceService.extractFaceEmbeddingsFromBuffer(
-				fileBuffer,
-				mimeType
-			);
-
-			// Create event image record
-			const eventImage = await photoRepository.createEventImage({
-				eventId: eventId,
-				storageFileId: driveFileId,
+			filesToUpload.push({
+				buffer: fileBuffer,
 				fileName: fileName,
 				mimeType: mimeType,
 			});
 
-			// Create face embedding records for each detected face
-			for (const embedding of embeddings) {
-				await photoRepository.createFaceEmbedding({
-					eventId: eventId,
-					eventImageId: eventImage.id,
-					embedding: embedding,
-				});
-			}
-
-			uploadedPhotos.push({
-				id: eventImage.id,
-				fileName: eventImage.file_name,
-				storageFileId: eventImage.storage_file_id,
-				mimeType: eventImage.mime_type,
-				facesDetected: embeddings.length,
+			// Store file data for later processing
+			fileDataMap.set(fileName, {
+				fileBuffer,
+				fileName,
+				mimeType,
+				filePath: file.path,
 			});
 
-			// Clean up temporary file
-			fs.unlinkSync(file.path);
+			sendProgress(STAGES.READING, i + 1, totalFiles, `Reading file ${i + 1}/${totalFiles}...`);
 		} catch (error) {
-			// Clean up temporary file even on error
+			// Clean up temporary file
 			if (fs.existsSync(file.path)) {
 				fs.unlinkSync(file.path);
 			}
 
-			// Log detailed error for debugging
-			console.error(`Error uploading photo ${file.originalname}:`, error);
-			console.error("Error stack:", error.stack);
-
+			console.error(`Error reading file ${file.originalname}:`, error);
 			errors.push({
 				fileName: file.originalname,
-				error: error instanceof ApiError ? error.message : error.message,
-				details: process.env.NODE_ENV === "development" ? error.stack : undefined,
+				error: error.message,
 			});
 		}
+	}
+
+	// Step 2: Batch upload all files to Google Drive in parallel
+	if (filesToUpload.length > 0) {
+		console.log(`Uploading ${filesToUpload.length} files to Google Drive in parallel (batch upload)...`);
+		sendProgress(STAGES.UPLOADING, 0, filesToUpload.length, 'Uploading to Google Drive...');
+		
+		// Track upload progress
+		let uploadedCount = 0;
+		const uploadProgressCallback = (current, total) => {
+			uploadedCount = current;
+			sendProgress(STAGES.UPLOADING, current, total, `Uploading ${current}/${total} to Google Drive...`);
+		};
+
+		const uploadResults = await driveService.uploadFilesBatch(
+			userId,
+			event.storageFolderId,
+			filesToUpload,
+			null, // Use default concurrency
+			uploadProgressCallback
+		);
+
+		sendProgress(STAGES.UPLOADING, filesToUpload.length, filesToUpload.length, 'Upload to Google Drive complete');
+
+		// Step 3: Process successfully uploaded files in parallel (face detection, database records)
+		sendProgress(STAGES.PROCESSING, 0, uploadResults.length, 'Processing photos...');
+		
+		// Filter successful uploads for processing
+		const successfulUploads = uploadResults.filter(result => result.success);
+		const processingConcurrency = env.photoProcessing?.concurrency || 3;
+		
+		// Process files in parallel batches
+		const processSingleFile = async (uploadResult) => {
+			const fileData = fileDataMap.get(uploadResult.fileName);
+
+			if (!fileData) {
+				console.error(`File data not found for ${uploadResult.fileName}`);
+				return null;
+			}
+
+			try {
+				const driveFileId = uploadResult.fileId;
+
+				// Extract face embeddings using Python service (parallel call)
+				const embeddings = await pythonFaceService.extractFaceEmbeddingsFromBuffer(
+					fileData.fileBuffer,
+					fileData.mimeType
+				);
+
+				// Create event image record
+				const eventImage = await photoRepository.createEventImage({
+					eventId: eventId,
+					storageFileId: driveFileId,
+					fileName: fileData.fileName,
+					mimeType: fileData.mimeType,
+				});
+
+				// Batch create face embedding records (much faster than one-by-one)
+				if (embeddings.length > 0) {
+					await photoRepository.createFaceEmbeddingsBatch(
+						eventId,
+						eventImage.id,
+						embeddings
+					);
+				}
+
+				// Clean up temporary file
+				if (fs.existsSync(fileData.filePath)) {
+					fs.unlinkSync(fileData.filePath);
+				}
+
+				return {
+					id: eventImage.id,
+					fileName: eventImage.file_name,
+					storageFileId: eventImage.storage_file_id,
+					mimeType: eventImage.mime_type,
+					facesDetected: embeddings.length,
+				};
+			} catch (error) {
+				// Clean up temporary file even on error
+				if (fs.existsSync(fileData.filePath)) {
+					fs.unlinkSync(fileData.filePath);
+				}
+
+				// Log detailed error for debugging
+				console.error(`Error processing photo ${uploadResult.fileName}:`, error);
+				console.error("Error stack:", error.stack);
+
+				throw {
+					fileName: uploadResult.fileName,
+					error: error instanceof ApiError ? error.message : error.message,
+					details: process.env.NODE_ENV === "development" ? error.stack : undefined,
+				};
+			}
+		};
+
+		// Process files in batches with concurrency control
+		let processedCount = 0;
+		for (let i = 0; i < successfulUploads.length; i += processingConcurrency) {
+			const batch = successfulUploads.slice(i, i + processingConcurrency);
+			
+			// Process batch in parallel
+			const batchResults = await Promise.allSettled(
+				batch.map(processSingleFile)
+			);
+
+			// Handle results
+			for (let j = 0; j < batchResults.length; j++) {
+				const result = batchResults[j];
+				processedCount++;
+
+				if (result.status === 'fulfilled' && result.value) {
+					uploadedPhotos.push(result.value);
+					sendProgress(STAGES.PROCESSING, processedCount, successfulUploads.length, 
+						`Processing ${processedCount}/${successfulUploads.length} (${result.value.fileName})...`);
+				} else if (result.status === 'rejected') {
+					errors.push(result.reason);
+					sendProgress(STAGES.PROCESSING, processedCount, successfulUploads.length, 
+						`Processing ${processedCount}/${successfulUploads.length}...`);
+				}
+			}
+		}
+
+		// Handle failed uploads
+		for (const uploadResult of uploadResults) {
+			if (!uploadResult.success) {
+				const fileData = fileDataMap.get(uploadResult.fileName);
+				if (fileData && fs.existsSync(fileData.filePath)) {
+					fs.unlinkSync(fileData.filePath);
+				}
+				errors.push({
+					fileName: uploadResult.fileName,
+					error: uploadResult.error || "Upload failed",
+				});
+			}
+		}
+
+		sendProgress(STAGES.COMPLETE, uploadResults.length, uploadResults.length, 'Upload complete!');
 	}
 
 	return {

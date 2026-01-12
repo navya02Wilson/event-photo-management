@@ -97,26 +97,27 @@ class PublicEvent {
 						<h3 class="public_event_search_title">Find Your Photos</h3>
 						<p class="public_event_search_subtitle">Upload a photo to instantly find photos of yourself from this event using AI</p>
 						
-						<div class="public_event_upload_area">
-							<input type="file" id="searchFileInput" accept="image/*" style="display: none;" />
-							<div class="public_event_upload_buttons">
-								<button class="public_event_upload_button" id="galleryButton">
-									<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-										<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-										<polyline points="17 8 12 3 7 8"></polyline>
-										<line x1="12" y1="3" x2="12" y2="15"></line>
-									</svg>
-									<span>Choose from Gallery</span>
-								</button>
-								<button class="public_event_upload_button public_event_camera_button" id="cameraButton">
-									<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-										<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-										<circle cx="12" cy="13" r="4"></circle>
-									</svg>
-									<span>Take Photo</span>
-								</button>
-							</div>
+					<div class="public_event_upload_area">
+						<input type="file" id="searchFileInput" accept="image/*" style="display: none;" />
+						<input type="file" id="cameraFileInput" accept="image/*" capture="environment" style="display: none;" />
+						<div class="public_event_upload_buttons">
+							<button class="public_event_upload_button" id="galleryButton">
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+									<polyline points="17 8 12 3 7 8"></polyline>
+									<line x1="12" y1="3" x2="12" y2="15"></line>
+								</svg>
+								<span>Choose from Gallery</span>
+							</button>
+							<button class="public_event_upload_button public_event_camera_button" id="cameraButton">
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+									<circle cx="12" cy="13" r="4"></circle>
+								</svg>
+								<span>Take Photo</span>
+							</button>
 						</div>
+					</div>
 
 						${this.isSearching ? `
 							<div class="public_event_searching">
@@ -182,14 +183,25 @@ class PublicEvent {
 		const galleryButton = this.container.querySelector("#galleryButton");
 		const cameraButton = this.container.querySelector("#cameraButton");
 		const searchFileInput = this.container.querySelector("#searchFileInput");
+		const cameraFileInput = this.container.querySelector("#cameraFileInput");
 
 		if (galleryButton && searchFileInput) {
 			galleryButton.addEventListener("click", () => searchFileInput.click());
 			searchFileInput.addEventListener("change", (e) => this.handleSearch(e));
 		}
 
-		if (cameraButton) {
-			cameraButton.addEventListener("click", () => this.openCamera());
+		if (cameraButton && cameraFileInput) {
+			// Use file input with capture attribute for camera access on HTTP
+			// This works on mobile devices and doesn't require HTTPS
+			cameraButton.addEventListener("click", () => cameraFileInput.click());
+			cameraFileInput.addEventListener("change", (e) => {
+				const file = e.target.files[0];
+				if (file) {
+					this.handleSearch(e);
+				}
+				// Reset the input so the same file can be selected again
+				e.target.value = "";
+			});
 		}
 
 		// Camera modal event listeners
@@ -253,6 +265,25 @@ class PublicEvent {
 
 	async openCamera() {
 		try {
+			// Check if mediaDevices API is available
+			if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+				const isHTTPS = window.location.protocol === "https:";
+				const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+				
+				let errorMessage = "Camera access is not available. ";
+				
+				if (!isHTTPS && !isLocalhost) {
+					errorMessage += "Modern browsers require HTTPS for camera access when accessing from a network IP address. ";
+					errorMessage += "Please use 'Choose from Gallery' instead, or access this page via HTTPS.";
+				} else {
+					errorMessage += "Your browser may not support camera access, or it's not available on this device.";
+				}
+				
+				this.searchError = errorMessage;
+				this.render();
+				return;
+			}
+
 			// Request camera access
 			const stream = await navigator.mediaDevices.getUserMedia({
 				video: {

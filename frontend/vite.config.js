@@ -14,6 +14,7 @@ export default defineConfig({
 		},
 	},
 	server: {
+		host: "0.0.0.0", // Listen on all network interfaces to allow access from other devices
 		port: 5173,
 		open: true,
 		proxy: {

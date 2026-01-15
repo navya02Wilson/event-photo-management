@@ -347,8 +347,8 @@ const searchSimilarFaces = async (eventId, file) => {
 	// Use the first face detected for search
 	const queryEmbedding = embeddings[0];
 
-	// Find similar faces
-	const matches = await photoRepository.findSimilarFaces(eventId, queryEmbedding);
+	// Find similar faces (no limit - return all matches above threshold)
+	const matches = await photoRepository.findSimilarFaces(eventId, queryEmbedding, null);
 
 	return matches;
 };

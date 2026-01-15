@@ -152,12 +152,13 @@ const cosineSimilarity = (vec1, vec2) => {
  * Find similar faces using cosine similarity search
  * @param {number} eventId - Event ID
  * @param {number[]} queryEmbedding - Query embedding vector (512 dimensions)
- * @param {number} limit - Maximum number of results
+ * @param {number|null} limit - Maximum number of results (null/undefined = no limit, returns all matches)
  * @param {number} threshold - Similarity threshold (0-1)
  * @returns {Promise<Object[]>} Array of similar face records with similarity scores
  */
-const findSimilarFaces = async (eventId, queryEmbedding, limit = 10, threshold = 0.5) => {
-	console.log(`[PhotoRepository] Searching similar faces (threshold: ${threshold}, limit: ${limit})`);
+const findSimilarFaces = async (eventId, queryEmbedding, limit = null, threshold = 0.5) => {
+	const limitText = limit === null ? "unlimited" : limit;
+	console.log(`[PhotoRepository] Searching similar faces (threshold: ${threshold}, limit: ${limitText})`);
 	// Get all embeddings for the event
 	const result = await query(
 		`SELECT 
@@ -196,10 +197,14 @@ const findSimilarFaces = async (eventId, queryEmbedding, limit = 10, threshold =
 	}
 
 	// Filter by threshold and sort by similarity
-	const filtered = similarities
+	let filtered = similarities
 		.filter(item => item.similarity > threshold)
-		.sort((a, b) => b.similarity - a.similarity)
-		.slice(0, limit);
+		.sort((a, b) => b.similarity - a.similarity);
+
+	// Apply limit only if specified
+	if (limit !== null && limit !== undefined) {
+		filtered = filtered.slice(0, limit);
+	}
 
 	return filtered;
 };

@@ -24,8 +24,8 @@ const pool = new Pool({
 /**
  * Test database connection
  */
-pool.on("connect", () => {
-	logger.info("Database connection established");
+pool.on("connect", (client) => {
+	logger.info(`Database connection established to: ${env.database.name} on ${env.database.host}:${env.database.port}`);
 });
 
 pool.on("error", (err) => {
@@ -88,8 +88,9 @@ const getClient = async () => {
  */
 const testConnection = async () => {
 	try {
-		const result = await query("SELECT NOW()");
-		logger.info("Database connection test successful");
+		const result = await query("SELECT NOW(), current_database() as db_name");
+		const dbName = result.rows[0].db_name;
+		logger.info(`Database connection test successful - Connected to database: ${dbName}`);
 		return true;
 	} catch (error) {
 		logger.error("Database connection test failed", error);

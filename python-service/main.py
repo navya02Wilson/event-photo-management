@@ -87,11 +87,11 @@ def load_model():
         # Prepare the model (loads it into memory)
         face_app.prepare(ctx_id=-1, det_size=(1280, 1280))  # Increased size for better group photo detection
         
-        print(f"✅ InsightFace model '{MODEL_NAME}' loaded successfully")
+        print(f"[OK] InsightFace model '{MODEL_NAME}' loaded successfully")
         return True
         
     except Exception as e:
-        print(f"❌ Failed to load InsightFace model: {str(e)}")
+        print(f"[ERROR] Failed to load InsightFace model: {str(e)}")
         print(f"Error type: {type(e).__name__}")
         import traceback
         traceback.print_exc()
@@ -130,7 +130,7 @@ async def startup_event():
     """Load model when service starts"""
     success = load_model()
     if not success:
-        print("⚠️  Warning: Model failed to load. Service will return errors for face operations.")
+        print("[WARNING] Model failed to load. Service will return errors for face operations.")
         print("   Please ensure InsightFace models are available.")
 
 

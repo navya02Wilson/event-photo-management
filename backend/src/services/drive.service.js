@@ -69,7 +69,8 @@ const createOAuth2Client = () => {
  * - scope: Defines the permissions requested
  */
 const getAuthUrl = async (userId) => {
-	const oauth2Client = createOAuth2Client();
+	try {
+		const oauth2Client = createOAuth2Client();
 
 	// Generate the URL that will be used for authorization
 	// Following Google OAuth 2.0 best practices
@@ -114,6 +115,25 @@ const getAuthUrl = async (userId) => {
 	}
 
 	return authUrl;
+	} catch (error) {
+		// Log detailed error information
+		console.error("Error in getAuthUrl:", {
+			message: error.message,
+			stack: error.stack,
+			userId: userId,
+			hasClientId: !!env.google.clientId,
+			hasClientSecret: !!env.google.clientSecret,
+			hasRedirectUri: !!env.google.redirectUri,
+		});
+		
+		// Re-throw ApiError as-is, wrap others
+		if (error instanceof ApiError) {
+			throw error;
+		}
+		
+		// Wrap unexpected errors
+		throw new ApiError(500, `Failed to generate authorization URL: ${error.message}`);
+	}
 };
 
 /**

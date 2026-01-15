@@ -8,6 +8,7 @@ const passwordUtil = require("../utils/password.util");
 const tokenUtil = require("../utils/token.util");
 const ApiError = require("../utils/ApiError");
 const { query } = require("../config/database");
+const logger = require("../config/logger");
 
 /**
  * Login user
@@ -17,45 +18,60 @@ const { query } = require("../config/database");
  * @throws {ApiError} If credentials are invalid
  */
 const login = async (email, password) => {
-	// Find user by email
-	const user = await userRepository.findByEmail(email);
+	try {
+		// Find user by email
+		const user = await userRepository.findByEmail(email);
 
-	if (!user) {
-		throw new ApiError(401, "Invalid email or password");
+		if (!user) {
+			throw new ApiError(401, "Invalid email or password");
+		}
+
+		// Check if user is active
+		if (!user.isActive) {
+			throw new ApiError(403, "Account is deactivated");
+		}
+
+		// Verify password
+		const isPasswordValid = await passwordUtil.verifyPassword(
+			password,
+			user.password
+		);
+
+		if (!isPasswordValid) {
+			throw new ApiError(401, "Invalid email or password");
+		}
+
+		// Generate tokens
+		const tokenPayload = {
+			id: user.id,
+			email: user.email,
+			name: user.name,
+			roles: user.roles,
+		};
+
+		const accessToken = tokenUtil.generateAccessToken(tokenPayload);
+		const refreshToken = tokenUtil.generateRefreshToken(tokenPayload);
+
+		// Return user data (without password) and tokens
+		return {
+			user: user.toJSON(),
+			accessToken,
+			refreshToken,
+		};
+	} catch (error) {
+		// Re-throw ApiError as-is
+		if (error instanceof ApiError) {
+			throw error;
+		}
+		// Log unexpected errors for debugging
+		logger.error("Login error:", {
+			message: error.message,
+			stack: error.stack,
+			email: email,
+		});
+		// Wrap unexpected errors in ApiError
+		throw new ApiError(500, "An error occurred during login");
 	}
-
-	// Check if user is active
-	if (!user.isActive) {
-		throw new ApiError(403, "Account is deactivated");
-	}
-
-	// Verify password
-	const isPasswordValid = await passwordUtil.verifyPassword(
-		password,
-		user.password
-	);
-
-	if (!isPasswordValid) {
-		throw new ApiError(401, "Invalid email or password");
-	}
-
-	// Generate tokens
-	const tokenPayload = {
-		id: user.id,
-		email: user.email,
-		name: user.name,
-		roles: user.roles,
-	};
-
-	const accessToken = tokenUtil.generateAccessToken(tokenPayload);
-	const refreshToken = tokenUtil.generateRefreshToken(tokenPayload);
-
-	// Return user data (without password) and tokens
-	return {
-		user: user.toJSON(),
-		accessToken,
-		refreshToken,
-	};
 };
 
 /**

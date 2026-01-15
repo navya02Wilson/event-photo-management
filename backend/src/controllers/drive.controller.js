@@ -13,13 +13,21 @@ const asyncHandler = require("../utils/asyncHandler");
  * GET /api/drive/auth-url
  */
 const getAuthUrl = asyncHandler(async (req, res) => {
-	const userId = req.user.id;
+	try {
+		const userId = req.user.id;
 
-	const authUrl = await driveService.getAuthUrl(userId);
+		const authUrl = await driveService.getAuthUrl(userId);
 
-	res.status(200).json(
-		new ApiResponse(200, { authUrl }, "Authorization URL generated successfully")
-	);
+		res.status(200).json(
+			new ApiResponse(200, { authUrl }, "Authorization URL generated successfully")
+		);
+	} catch (error) {
+		// Log the error for debugging
+		console.error("Error in getAuthUrl:", error);
+		
+		// Re-throw to let error middleware handle it
+		throw error;
+	}
 });
 
 /**

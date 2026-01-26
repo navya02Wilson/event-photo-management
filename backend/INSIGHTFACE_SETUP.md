@@ -145,3 +145,10 @@ console.log(`Embedding dimensions: ${embeddings[0].length}`);
 
 
 
+
+
+
+
+
+
+
